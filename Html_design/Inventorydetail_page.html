@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            margin: 0;
+        }
+        .details {
+            margin-bottom: 20px;
+        }
+        .details div {
+            margin: 5px 0;
+        }
+        .products {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .products th, .products td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .products th {
+            background-color: #f4f4f4;
+        }
+        .totals {
+            margin-top: 20px;
+            text-align: right;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Invoice</h1>
+    </div>
+    <div class="details">
+        <div><strong>Invoice Number:</strong> {{invoice_number}}</div>
+        <div><strong>Date:</strong> {{invoice_created_at}}</div>
+        <div><strong>Customer:</strong> {{customer_name}}</div>
+        <div><strong>Phone:</strong> {{phone}}</div>
+        <div><strong>Email:</strong> {{email}}</div>
+        <div><strong>Address:</strong> {{address}}</div>
+    </div>
+    <table class="products">
+        <thead>
+            <tr>
+                <th>Product Name</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each products}}
+            <tr>
+                <td>{{product_name}}</td>
+                <td>₹{{product_price}}</td>
+                <td>{{product_quantity}}</td>
+                <td>₹{{total}}</td>
+            </tr>
+            {{/each}}
+        </tbody>
+    </table>
+    <div class="totals">
+        <div>Subtotal: ₹{{subtotal}}</div>
+        <div>Discount: ₹{{discount}}</div>
+        <div><strong>Final Price: ₹{{final_price}}</strong></div>
+    </div>
+    <div class="footer">
+        Thank you for your shoping!
+    </div>
+</body>
+</html>

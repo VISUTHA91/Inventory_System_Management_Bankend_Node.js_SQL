@@ -1,28 +1,35 @@
 
 const Product = require('../model/Product_model');
+const db = require("../config/Database");
 
 
 class ProductController {
-    // Get all products
-    static async getAllProducts(req, res) {
 
-        try {
-            const products = await Product.fetchAll();
 
+static getAllProducts(req, res) {
+    Product.fetchAll()
+        .then(products => {
+            // Handle the case where no products are found
             if (products.length === 0) {
                 return res.status(404).json({ message: 'No products found' });
             }
+
+            // Respond with fetched products
             res.status(200).json({
                 message: 'Products fetched successfully',
                 data: products
             });
-        } catch (err) {
+        })
+        .catch(err => {
+            console.error('Error fetching products:', err);
             res.status(500).json({
                 message: 'Error fetching products',
                 error: err.message
             });
-        }
-    }
+        });
+}
+
+
 
     // Get product by ID
     static async getProductById(req, res) {
@@ -47,43 +54,106 @@ class ProductController {
     }
 
 
-    // Create a product
+
     static async createProduct(req, res) {
         const productData = req.body;
+
+        // Validate input
+        if (!productData.product_name || !productData.product_batch_no || !productData.expiry_date || !productData.product_quantity) {
+            return res.status(400).json({ message: 'Missing required fields (product_name, product_batch_no, expiry_date, product_quantity).' });
+        }
+
+        if (productData.product_quantity <= 0) {
+            return res.status(400).json({ message: 'Product quantity must be greater than 0.' });
+        }
+
         try {
-            const result = await Product.create(productData);
-            res.status(201).json({
-                message: 'Product created successfully',
-                data: result
-            });
-            // console.log(result)
+            // Check for existing product with the same batch number and expiry date
+            const existingProduct = await Product.findByAttributes(productData);
+
+            if (existingProduct) {
+                if (existingProduct.product_name === productData.product_name) {
+                    // Update existing product's quantity
+                    const updatedQuantity = existingProduct.product_quantity + productData.product_quantity;
+
+                    // Determine stock status
+                    let stockStatus = 'Available';
+                    if (updatedQuantity === 0) stockStatus = 'Out of Stock';
+                    else if (updatedQuantity <= 20) stockStatus = 'Low Stock';
+
+                    const result = await Product.updateQuantity(existingProduct.id, updatedQuantity, stockStatus);
+
+                    return res.status(200).json({
+                        message: 'Product quantity updated successfully.',
+                        data: result
+                    });
+                } else {
+                    // Product name differs, create a new row
+                    const stockStatus = productData.product_quantity < 20 ? 'Low Stock' : 'Available';
+
+                    const result = await Product.create({ ...productData, stock_status: stockStatus });
+
+                    return res.status(201).json({
+                        message: 'New product created with a different product name.',
+                        data: result
+                    });
+                }
+            } else {
+                // Create a new product row
+                const stockStatus = productData.product_quantity < 20 ? 'Low Stock' : 'Available';
+
+                const result = await Product.create({ ...productData, stock_status: stockStatus });
+
+                return res.status(201).json({
+                    message: 'New product created successfully.',
+                    data: result
+                });
+            }
         } catch (err) {
             res.status(500).json({
-                message: 'Error creating product',
-                error: err.message || err
+                message: 'Error processing product.',
+                error: err.message
             });
         }
     }
-
-    // Update product
+    
+    
+    
+    
+    
+    
+   
+   
+   
+   
     static async updateProduct(req, res) {
         try {
-            const result = await Product.update(req.params.id, req.body);
-            if (result.affectedRows === 0) {
-                return res.status(404).json({ message: 'Product not found' });
+            const productId = req.params.id;
+            const updatedData = req.body;
+    
+            console.log('Incoming Request Data:', updatedData);
+    
+            // Validate required fields
+            if (!updatedData.product_name || !updatedData.product_category || !updatedData.product_quantity) {
+                return res.status(400).json({ message: 'Missing required fields (product_name, product_category, product_quantity).' });
             }
-            res.status(200).json({ message: 'Product updated successfully' });
-            console.log(res);
+    console.log(updatedData);
+            // Update product in the database
+            const result = await Product.update(productId, updatedData);
+    
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ message: 'Product not found or already deleted.' });
+            }
+    
+            res.status(200).json({ message: 'Product updated successfully.' });
         } catch (err) {
-            res.status(500).json({ message: 'Error updating product', error: err.message });
+            console.error('Error updating product:', err);
+            res.status(500).json({ message: 'Error updating product.', error: err.message });
         }
     }
-
-
-
-
-    // Perform the soft delete by updating is_deleted flag and deleted_at timestamp
-
+    
+   
+   
     static async softDeleteProduct(req, res) {
         const productId = req.params.id;
 

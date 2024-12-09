@@ -8,7 +8,8 @@ const staffRoutes = require("./routes/Staff_routes");
 const categoryRoutes = require("./routes/Product_Category_routes");
 const supplierRoutes = require("./routes/Supplier_routes");
 const  customerRoutes = require("./routes/Customer_routes");
-
+const invoiceRoutes = require("./routes/Invoice_routes");
+const shopRoutes = require("./routes/pharmachy_details_routes");
 
 const multer = require('multer');
 
@@ -41,6 +42,10 @@ app.use('/pro_category', categoryRoutes);
 app.use('/supplier', supplierRoutes);
 // Customer routes
 app.use('/customer', customerRoutes);
+// Invoice routes
+app.use('/invoice', invoiceRoutes);
+// Use the shop routes
+app.use('/shop', shopRoutes);
 
 
 app.listen(port, () => {

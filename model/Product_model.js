@@ -1,9 +1,9 @@
-const db = require('../config/Database');
+const db = require("../config/Database");
 
 // models/productModel.js
 
 class Product {
-    // Fetch all products (excluding soft-deleted products)
+    
 
     static fetchAll() {
         return new Promise((resolve, reject) => {
@@ -36,20 +36,34 @@ class Product {
             JOIN 
                 supplier s ON p.supplier = s.supplier_id
             WHERE 
-                p.is_deleted = 0;`; // Only fetch products that are not soft-deleted
-
+                p.is_deleted = 0;`; // Fetch only products not soft-deleted
+    
             db.query(query, (err, result) => {
                 if (err) {
                     console.error('Database error:', err);
-                    return reject({ message: 'Error fetching products', error: err });
+                    return reject(new Error('Error fetching products from the database'));
                 }
-                if (result.length === 0) {
-                    return reject({ message: 'No products found' });
+    
+                if (!result || result.length === 0) {
+                    return resolve([]); // Return an empty array if no products found
                 }
-                resolve(result); // Resolve with the fetched product data
+    
+                // Update stock_status based on product_quantity
+                const updatedProducts = result.map(product => {
+                    let stockStatus = 'Available';
+                    if (product.product_quantity === 0) {
+                        stockStatus = 'Out of Stock';
+                    } else if (product.product_quantity < 20) {
+                        stockStatus = 'Low Stock';
+                    }
+                    return { ...product, stock_status: stockStatus };
+                });
+    
+                resolve(updatedProducts); // Return updated product data
             });
         });
     }
+    
 
 
 
@@ -99,126 +113,180 @@ class Product {
     }
 
 
+                // static findByAttributes(productData) {
+                //     console.log(productData.product_name,productData.product_batch_no,productData.expiry_date);
+                //     return new Promise((resolve, reject) => {
+                //         const query = `
+                //             SELECT * FROM product_table 
+                //             WHERE product_name = ? AND product_batch_no = ? AND expiry_date = ?
+                //         `;
+                //         db.query(query, [
+                //             productData.product_name,
+                //             productData.product_batch_no,
+                //             productData.expiry_date
+                //         ], (err, result) => {
+                //             if (err) {console.log(err); return reject(err)};
+                //             resolve(result.length > 0 ? result[0] : null);
+                //         });
+                //     });
+                // }
 
-    // Insert a single product into the database
 
 
-
-
-    static create(productData) {
-        return new Promise((resolve, reject) => {
-            // Calculate the stock status before the query
-            let stockStatus = 'Available'; // Default to Available
-            if (productData.product_quantity === 0) {
-                stockStatus = 'Out of Stock';
-            } else if (productData.product_quantity <= 20) {
-                stockStatus = 'Low Stock';
-            }
-
-            // Log the stock status for debugging
-            console.log('Calculated stock_status:', stockStatus);
-
-            // Step 1: Check if the supplier exists in the supplier table
-            const checkSupplierQuery = `SELECT * FROM supplier WHERE supplier_id = ?`;
-
-            db.query(checkSupplierQuery, [productData.supplier], (err, result) => {
-                if (err) {
-                    console.error('Database error during supplier check:', err);
-                    return reject(err); // Reject the promise with the error
+                static findByAttributes(productData) {
+                    // console.log('Input Data:', productData.product_name, productData.product_batch_no, productData.expiry_date);
+                
+                    return new Promise((resolve, reject) => {
+                        const query = `
+                            SELECT * FROM product_table 
+                            WHERE LOWER(product_name) = LOWER(?) 
+                              AND LOWER(product_batch_no) = LOWER(?) 
+                              AND DATE(expiry_date) = DATE(?)
+                        `;
+                        db.query(query, [
+                            productData.product_name.trim(),
+                            productData.product_batch_no.trim(),
+                            productData.expiry_date
+                        ], (err, result) => {
+                            if (err) {
+                                console.error('Database Error:', err);
+                                return reject(err);
+                            }
+                            resolve(result.length > 0 ? result[0] : null);
+                        });
+                    });
                 }
+                
 
-                // If no supplier is found, reject with an error message
-                if (result.length === 0) {
-                    return reject({ message: "Supplier does not exist in the database" });
+
+
+
+            
+                static updateQuantity(product_id, new_quantity, stock_status) {
+                    return new Promise((resolve, reject) => {
+                        const query = `
+                            UPDATE product_table 
+                            SET product_quantity = ?, stock_status = ?, updated_at = NOW()
+                            WHERE id = ?
+                        `;
+                        db.query(query, [new_quantity, stock_status, product_id], (err, result) => {
+                            if (err) return reject(err);
+                            resolve(result);
+                        });
+                    });
                 }
+            
+                static create(productData) {
+                    return new Promise((resolve, reject) => {
+                        const query = `
+                            INSERT INTO product_table 
+                            (product_name, product_category, product_quantity, product_price, product_description,
+                            generic_name, product_batch_no, expiry_date, product_discount, supplier_price, supplier,
+                            brand_name, selling_price, GST, stock_status, created_at, updated_at, deleted_at, is_deleted)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), NULL, 0)
+                        `;
+                        db.query(query, [
+                            productData.product_name,
+                            productData.product_category,
+                            productData.product_quantity,
+                            productData.product_price,
+                            productData.product_description,
+                            productData.generic_name,
+                            productData.product_batch_no,
+                            productData.expiry_date,
+                            productData.product_discount,
+                            productData.supplier_price,
+                            productData.supplier,
+                            productData.brand_name,
+                            productData.selling_price,
+                            productData.GST,
+                            productData.stock_status
+                        ], (err, result) => {
+                            if (err) return reject(err);
+                            resolve(result);
+                        });
+                    });
+                }
+               
+            
+            
+    
+    
 
 
-                // Step 2: If supplier exists, proceed to insert the product into the product_table
-                const insertProductQuery = `
-                    INSERT INTO product_table 
-                    (product_name, product_category, product_quantity, product_price, product_description, 
-                    generic_name, product_batch_no, expiry_date, product_discount, supplier_price, supplier, 
-                    brand_name, selling_price, GST, stock_status, created_at, updated_at, deleted_at, is_deleted)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), NULL, 0)
-                `;
+//my old correct code
 
-                db.query(insertProductQuery, [
-                    productData.product_name,
-                    productData.product_category,
-                    productData.product_quantity,
-                    productData.product_price,
-                    productData.product_description,
-                    productData.generic_name,
-                    productData.product_batch_no,
-                    productData.expiry_date,
-                    productData.product_discount,
-                    productData.supplier_price,
-                    productData.supplier,
-                    productData.brand_name,
-                    productData.selling_price,
-                    productData.GST,
-                    stockStatus  // Use the pre-calculated stock status
-                ], (err, result) => {
-                    if (err) {
-                        console.error('Database error during product insertion:', err);
-                        return reject(err); // Reject the promise with the error
-                    }
-                    resolve(result); // Resolve the promise with the result of the insert query
-                });
-            });
-        });
-    }
+    // static async bulkCreate(productsData) {
+    //     console.log("Attempting to bulk insert products:", productsData);
+    //     console.log('Request Body:', req.body)
 
 
+    //     try {
+    //         // Prepare an array to store processed product data
+    //         const processedProducts = [];
+
+    //         for (const product of productsData) {
+    //             // Fetch category ID
+    //             const [categoryResult] = await db.promise().query(
+    //                 `SELECT id FROM product_category WHERE category_name = ? LIMIT 1`,
+    //                 [product.product_category]
+    //             );
+    //             const categoryID = categoryResult.length ? categoryResult[0].id : null;
+
+    //             // Fetch supplier ID
+    //             const [supplierResult] = await db.promise().query(
+    //                 `SELECT supplier_id FROM supplier WHERE company_name = ? LIMIT 1`,
+    //                 [product.supplier]
+    //             );
+    //             const supplierID = supplierResult.length ? supplierResult[0].supplier_id : null;
+
+    //             // Push processed product into array
+    //             processedProducts.push([
+    //                 product.product_name,
+    //                 categoryID, // Use fetched category ID
+    //                 product.product_quantity,
+    //                 product.product_price,
+    //                 product.product_description,
+    //                 product.generic_name,
+    //                 product.product_batch_no,
+    //                 product.expiry_date,
+    //                 product.product_discount,
+    //                 product.supplier_price,
+    //                 supplierID, // Use fetched supplier ID
+    //                 product.brand_name,
+    //                 product.selling_price,
+    //                 product.GST,
+    //                 product.stock_status,
+    //             ]);
+    //         }
+
+    //         // Bulk insert processed products
+    //         const query = `
+    //         INSERT INTO product_table (
+    //             product_name, product_category, product_quantity, product_price, product_description,
+    //             generic_name, product_batch_no, expiry_date, product_discount, supplier_price, supplier,
+    //             brand_name, selling_price, GST, stock_status
+    //         ) VALUES ?
+    //     `;
+
+    //         const [result] = await db.promise().query(query, [processedProducts]);
+
+    //         console.log("Bulk insert successful:", result);
+    //         return result;
+    //     } catch (err) {
+    //         console.error("Error during bulk insert:", err);
+    //         throw err;
+    //     }
+    // }
 
 
 
-    // Bulk insert multiple products into the database   
+ 
 
-    static async bulkCreate(productsData) {
-        console.log("Attempting to bulk insert products:", productsData);
-
-        try {
-            // Prepare an array to store processed product data
-            const processedProducts = [];
-
-            for (const product of productsData) {
-                // Fetch category ID
-                const [categoryResult] = await db.promise().query(
-                    `SELECT id FROM product_category WHERE category_name = ? LIMIT 1`,
-                    [product.product_category]
-                );
-                const categoryID = categoryResult.length ? categoryResult[0].id : null;
-
-                // Fetch supplier ID
-                const [supplierResult] = await db.promise().query(
-                    `SELECT supplier_id FROM supplier WHERE company_name = ? LIMIT 1`,
-                    [product.supplier]
-                );
-                const supplierID = supplierResult.length ? supplierResult[0].supplier_id : null;
-
-                // Push processed product into array
-                processedProducts.push([
-                    product.product_name,
-                    categoryID, // Use fetched category ID
-                    product.product_quantity,
-                    product.product_price,
-                    product.product_description,
-                    product.generic_name,
-                    product.product_batch_no,
-                    product.expiry_date,
-                    product.product_discount,
-                    product.supplier_price,
-                    supplierID, // Use fetched supplier ID
-                    product.brand_name,
-                    product.selling_price,
-                    product.GST,
-                    product.stock_status,
-                ]);
-            }
-
-            // Bulk insert processed products
-            const query = `
+  // Bulk insert products
+  static async bulkCreate(productData) {
+    try {
+        const query = `
             INSERT INTO product_table (
                 product_name, product_category, product_quantity, product_price, product_description,
                 generic_name, product_batch_no, expiry_date, product_discount, supplier_price, supplier,
@@ -226,73 +294,14 @@ class Product {
             ) VALUES ?
         `;
 
-            const [result] = await db.promise().query(query, [processedProducts]);
-
-            console.log("Bulk insert successful:", result);
-            return result;
-        } catch (err) {
-            console.error("Error during bulk insert:", err);
-            throw err;
-        }
+        
+        const [result] = await db.promise().query(query, [productData]);
+        // console.log(productsData);
+        return result;
+    } catch (err) {
+        throw err;
     }
-
-
-
-
-
-    //it is correct code
-    // static bulkCreate(productsData) {
-    //     console.log("Attempting to bulk insert products:", productsData);
-
-    //     return new Promise((resolve, reject) => {
-    //         // Constructing values for bulk insert
-    //         const values = productsData.map(product => [
-    //             product.product_name,
-    //             product.product_category,
-    //             product.product_quantity,
-    //             product.product_price,
-    //             product.product_description,
-    //             product.generic_name,
-    //             product.product_batch_no,
-    //             product.expiry_date,
-    //             product.product_discount,
-    //             product.supplier_price,
-    //             product.supplier,
-    //             product.brand_name,
-    //             product.selling_price,
-    //             product.GST,
-    //             product.stock_status
-    //         ]);
-
-    //         // SQL query for bulk insert with JOINs (using SELECT for category and supplier)
-    //         const query = `
-    //             INSERT INTO product_table (
-    //                 product_name, product_category, product_quantity, product_price, product_description,
-    //                 generic_name, product_batch_no, expiry_date, product_discount, supplier_price, supplier,
-    //                 brand_name, selling_price, GST, stock_status
-    //             )
-    //             SELECT ?, 
-    //                    (SELECT id FROM product_category WHERE category_name = ? LIMIT 1) AS product_category, 
-    //                    ?, ?, ?, 
-    //                    ?, ?, ?, ?, ?, 
-    //                    (SELECT supplier_id FROM supplier WHERE company_name = ? LIMIT 1) AS supplier, 
-    //                    ?, ?, ?, ?
-    //         `;
-
-    //         // Flatten the values array to pass them as individual query parameters
-    //         const flatValues = values.flat();
-
-    //         // Perform bulk insert for all products in the data array
-    //         db.query(query, flatValues, (err, result) => {
-    //             if (err) {
-    //                 console.error("Database error during bulk insert:", err);
-    //                 return reject(err);
-    //             }
-    //             console.log("Bulk insert successful:", result);
-    //             resolve(result);
-    //         });
-    //     });
-    // }
+}
 
 
 
@@ -303,59 +312,61 @@ class Product {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // Update an existing product by ID
+   
 
 
     static update(id, updatedData) {
         return new Promise((resolve, reject) => {
+            // Ensure updatedData values are not undefined or null
+            const productPrice = updatedData.product_price || null; // Use null as fallback
+            const supplierPrice = updatedData.supplier_price || null;
+            const productDiscount = updatedData.product_discount || null;
+    
             const query = `
                 UPDATE product_table 
                 SET 
                     product_name = ?, 
                     product_category = ?, 
                     product_quantity = ?, 
-                    product_price = ?, 
+                    product_price = CASE 
+                        WHEN ? IS NULL THEN product_price 
+                        ELSE ? 
+                    END, 
                     product_description = ?, 
                     generic_name = ?, 
                     product_batch_no = ?, 
                     expiry_date = ?, 
-                    product_discount = ?, 
-                    supplier_price = ?,
+                    product_discount = CASE 
+                        WHEN ? IS NULL THEN product_discount 
+                        ELSE ? 
+                    END, 
+                    supplier_price = CASE 
+                        WHEN ? IS NULL THEN supplier_price 
+                        ELSE ? 
+                    END,
                     supplier = ?, 
                     brand_name = ?, 
                     selling_price = ?, 
                     GST = ?, 
                     stock_status = CASE 
                         WHEN ? = 0 THEN 'Out of Stock'
-                        WHEN ? <= 20 THEN 'Low Stock'
+                        WHEN ? < 20 THEN 'Low Stock'
                         ELSE 'Available'
-                    END
+                    END,
+                    updated_at = NOW()
                 WHERE id = ? AND is_deleted = 0`;
-
+    
             db.query(query, [
                 updatedData.product_name,
                 updatedData.product_category,
                 updatedData.product_quantity,
-                updatedData.product_price,
+                productPrice, productPrice, // Handle product_price
                 updatedData.product_description,
                 updatedData.generic_name,
                 updatedData.product_batch_no,
                 updatedData.expiry_date,
-                updatedData.product_discount,
-                updatedData.supplier_price,
+                productDiscount, productDiscount, // Handle product_discount
+                supplierPrice, supplierPrice, // Handle supplier_price
                 updatedData.supplier,
                 updatedData.brand_name,
                 updatedData.selling_price,
@@ -364,14 +375,26 @@ class Product {
                 updatedData.product_quantity,
                 id
             ], (err, result) => {
-                if (err) reject(err);
-
+                if (err) {
+                    console.error('Error in query:', err);
+                    return reject(err);
+                }
                 resolve(result);
+    
+                // Log for debugging
+                console.log('Updated Data:', {
+                    productPrice,
+                    supplierPrice,
+                    productDiscount,
+                });
             });
         });
     }
-
-    // Soft delete a product by setting the `is_deleted` flag
+    
+    
+    
+    
+    
     static softDeleteProduct(id) {
         return new Promise((resolve, reject) => {
             const query = 'UPDATE product_table SET is_deleted = 1, deleted_at = NOW() WHERE id = ?';

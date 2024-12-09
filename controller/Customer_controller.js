@@ -1,17 +1,64 @@
 const Customer = require('../model/Customer_model');
 
+// // Create a new customer 
+//my old corrected code
+// exports.createCustomer = async (req, res) => {
+//     try {
+//         const { customer_name, phone, email, address, purchased_item, purchased_quantity, amount, status } = req.body;
+        
+//         console.log("Request body:", req.body);  // Log request body
+
+//         if (!customer_name || !phone || !email || !address || !purchased_item || !purchased_quantity || !amount || !status) {
+//             return res.status(400).json({ error: 'All fields are required' });
+//         }
+
+//         const customerId = await Customer.create({ customer_name, phone, email, address, purchased_item, purchased_quantity, amount, status });
+
+//         res.status(201).json({ message: 'Customer created successfully', customerId });
+//     } catch (err) {
+//         console.error("Error:", err);
+//         res.status(500).json({ error: 'Failed to create customer' });
+//     }
+// };
+
+
 // Create a new customer
 exports.createCustomer = async (req, res) => {
     try {
-        const { customer_name, phone, email, address, purchased_item, purchased_quantity, amount, status } = req.body;
-        
-        console.log("Request body:", req.body);  // Log request body
+        const {
+            customer_name,
+            phone,
+            email,
+            address,
+            purchased_item,
+            purchased_quantity,
+            amount,
+            status,
+            customer_gst_number,
+        } = req.body;
 
+        console.log("Request body:", req.body); // Log request body
+
+        // Validate required fields
         if (!customer_name || !phone || !email || !address || !purchased_item || !purchased_quantity || !amount || !status) {
-            return res.status(400).json({ error: 'All fields are required' });
+            return res.status(400).json({ error: 'All fields except GST number are required' });
         }
 
-        const customerId = await Customer.create({ customer_name, phone, email, address, purchased_item, purchased_quantity, amount, status });
+        // Handle GST number
+        const gstNumber = customer_gst_number && customer_gst_number.trim() !== '' ? customer_gst_number : '-';
+
+        // Insert the customer
+        const customerId = await Customer.create({
+            customer_name,
+            phone,
+            email,
+            address,
+            purchased_item,
+            purchased_quantity,
+            amount,
+            status,
+            customer_gst_number: gstNumber,
+        });
 
         res.status(201).json({ message: 'Customer created successfully', customerId });
     } catch (err) {
@@ -19,6 +66,7 @@ exports.createCustomer = async (req, res) => {
         res.status(500).json({ error: 'Failed to create customer' });
     }
 };
+
 
 
 
