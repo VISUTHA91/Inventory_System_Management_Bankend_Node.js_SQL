@@ -7,9 +7,12 @@ const adminRoutes = require('./routes/Admin_routes');
 const staffRoutes = require("./routes/Staff_routes");
 const categoryRoutes = require("./routes/Product_Category_routes");
 const supplierRoutes = require("./routes/Supplier_routes");
-const  customerRoutes = require("./routes/Customer_routes");
+const customerRoutes = require("./routes/Customer_routes");
 const invoiceRoutes = require("./routes/Invoice_routes");
 const shopRoutes = require("./routes/pharmachy_details_routes");
+const expenseRoutes  = require("./routes/Expense_routes");
+const reportRoutes = require('./routes/Report_routes');
+const supplier_invoice_routes = require('./routes/Supplier_invoice_routes');
 
 const multer = require('multer');
 
@@ -46,6 +49,14 @@ app.use('/customer', customerRoutes);
 app.use('/invoice', invoiceRoutes);
 // Use the shop routes
 app.use('/shop', shopRoutes);
+// Use expense routes
+app.use('/expense', expenseRoutes);
+//use report routes 
+app.use('/report', reportRoutes);
+
+// supplier invoice details Routes
+app.use('/supplier_invoice', supplier_invoice_routes);
+
 
 
 app.listen(port, () => {

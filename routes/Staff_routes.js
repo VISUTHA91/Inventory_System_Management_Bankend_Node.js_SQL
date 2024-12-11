@@ -2,7 +2,7 @@
 const express = require('express');
 const StaffController = require('../controller/Staff_controller');
 
-const {authMiddleware,adminOnly,adminOrStaff} = require('../middleware/auth_middleware');
+const {authMiddleware,adminOnly,adminOrStaff,limiter} = require('../middleware/auth_middleware');
 
 const router = express.Router();
 
@@ -13,7 +13,7 @@ const router = express.Router();
 router.post('/register', authMiddleware,adminOnly,StaffController.register);
 
 // Route for staff login
-router.post('/login', StaffController.login);
+router.post('/login', limiter,StaffController.login);
 
 // Route to request password reset
 router.post('/request-password-reset', StaffController.requestPasswordReset);

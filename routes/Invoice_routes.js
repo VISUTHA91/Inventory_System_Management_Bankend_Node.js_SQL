@@ -23,11 +23,10 @@ router.put('/invoiceup/:id', invoiceController.updateInvoice);
 // Delete Invoice
 router.delete('/invoicedel/:id', invoiceController.deleteInvoice);
 
-// // Route to get income and expense for a specific period (1 day, 1 week, 1 month, 1 year)
-// router.get('/income-expense/:period', invoiceController.getIncomeExpenseForPeriod);
 
-// Route to get income and expense details for a specific time range
-router.post('/income-expense', invoiceController.getIncomeExpense);
+
+// // Route to get income and expense details for a specific time range
+// router.post('/income-expense', invoiceController.getIncomeExpense);
 
 
 module.exports = router;

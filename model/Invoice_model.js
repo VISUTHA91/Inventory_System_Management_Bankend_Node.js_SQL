@@ -252,7 +252,7 @@ class Invoice {
     }
 
 
-  
+
     // static getInvoiceDetails(invoice_number) {
     //     return new Promise((resolve, reject) => {
     //         const query = `
@@ -262,9 +262,9 @@ class Invoice {
     //             JOIN product_table p ON i.product_id = p.id
     //             WHERE i.invoice_number = ?
     //         `;
-    
+
     //         console.log("Executing query:", query, "with invoice_number:", invoice_number);
-    
+
     //         db.promise().query(query, [invoice_number])
     //             .then(([results]) => {
     //                 console.log("Query results:", results);
@@ -280,8 +280,8 @@ class Invoice {
 
 
 
-    
-//my correct code
+
+    //my correct code
 
     // static getInvoiceById(id) {
     //     return new Promise((resolve, reject) => {
@@ -318,7 +318,7 @@ class Invoice {
     //         WHERE i.id = ?
     //         GROUP BY i.id;
     //         `;
-    
+
     //         // Query to fetch the shop details (assuming one shop per invoice)
     //         const shopQuery = `
     //         SELECT 
@@ -332,7 +332,7 @@ class Invoice {
     //         FROM shop_table
     //         WHERE shop_id = (SELECT shop_id FROM invoice_table WHERE id = ?);
     //         `;
-    
+
     //         // Execute the first query to get the invoice details
     //         db.query(invoiceQuery, [id], (err, invoiceResults) => {
     //             if (err) {
@@ -342,7 +342,7 @@ class Invoice {
     //                     error: err
     //                 });
     //             }
-    
+
     //             if (invoiceResults.length === 0) {
     //                 console.log('Invoice not found for ID:', id);
     //                 return reject({
@@ -350,11 +350,11 @@ class Invoice {
     //                     error: `Invoice with ID ${id} does not exist.`
     //                 });
     //             }
-    
+
     //             // Parse the products field
     //             const invoice = invoiceResults[0];
     //             invoice.products = JSON.parse(invoice.products || '[]');
-    
+
     //             // Execute the second query to get the shop details
     //             db.query(shopQuery, [id], (err, shopResults) => {
     //                 if (err) {
@@ -364,7 +364,7 @@ class Invoice {
     //                         error: err
     //                     });
     //                 }
-    
+
     //                 if (shopResults.length === 0) {
     //                     console.log('Shop not found for Invoice ID:', id);
     //                     return reject({
@@ -372,14 +372,14 @@ class Invoice {
     //                         error: `Shop details for Invoice ID ${id} do not exist.`
     //                     });
     //                 }
-    
+
     //                 // Combine invoice and shop details
     //                 const shop = shopResults[0];
     //                 const invoiceWithShop = { ...invoice, shop };
-    
+
     //                 // Log the combined details
     //                 console.log("Combined Invoice Details:", JSON.stringify(invoiceWithShop, null, 2));
-    
+
     //                 resolve(invoiceWithShop);
     //             });
     //         });
@@ -388,7 +388,7 @@ class Invoice {
 
 
 
-//getbyid   i.quantity AS invoice_quantity, 
+    //getbyid   i.quantity AS invoice_quantity, 
 
     static getInvoiceById(id) {
         return new Promise((resolve, reject) => {
@@ -471,17 +471,17 @@ class Invoice {
 
 
 
-   
-    
-    
-    
 
-    
-   static deleteInvoice(id) {
+
+
+
+
+
+    static deleteInvoice(id) {
         return new Promise((resolve, reject) => {
             const query = `DELETE FROM invoice_table WHERE id = ?`;
-             // Log the query for debugging
-             console.log("Executing query:", query, "with id:", id);
+            // Log the query for debugging
+            console.log("Executing query:", query, "with id:", id);
 
             // Run the query to delete the invoice by ID
             db.query(query, [id], (err, result) => {
@@ -496,44 +496,78 @@ class Invoice {
 
 
 
-    static getIncomeExpenseData(startDate, endDate) {
+    // static getIncomeExpenseData(startDate, endDate) {
+    //     return new Promise((resolve, reject) => {
+    //         const query = `
+    //         SELECT
+    //             -- Sales Income
+    //             (SELECT SUM(total_price) FROM invoice_table WHERE invoice_created_at BETWEEN ? AND ?) AS income,
+
+    //             -- Sales Discount Expense
+    //             (SELECT SUM(discount) FROM invoice_table WHERE invoice_created_at BETWEEN ? AND ?) AS expense,
+
+    //             -- Supplier Credit (Amount Owed)
+    //             (SELECT SUM(credit) FROM supplier WHERE created_at BETWEEN ? AND ?) AS supplier_credit,
+
+    //             -- Supplier Payments (Amount Paid)
+    //             (SELECT SUM(debit) FROM supplier WHERE created_at BETWEEN ? AND ?) AS supplier_payments
+    //     `;
+
+    //         // Execute the query
+    //         db.query(query, [startDate, endDate, startDate, endDate, startDate, endDate, startDate, endDate], (err, results) => {
+    //             if (err) {
+    //                 return reject(err); // Reject the promise with error
+    //             }
+
+    //             // Calculate Supplier Payments Balance
+    //             const supplier_credit = results[0].supplier_credit || 0;
+    //             const supplier_payments = results[0].supplier_payments || 0;
+    //             const supplier_balance = supplier_credit - supplier_payments;
+
+    //             // Add the balance to the result
+    //             results[0].supplier_balance = supplier_balance;
+
+    //             resolve(results[0]); // Resolve with the final result
+    //         });
+    //     });
+    // }
+
+
+    // Fetch income and expense reports
+
+
+
+
+    static calculateIncome(startDate, endDate) {
         return new Promise((resolve, reject) => {
+            const queryIncome = `SELECT SUM(final_price) AS totalIncome FROM invoice_table WHERE invoice_created_at BETWEEN ? AND ?`;
+
             const query = `
-            SELECT
-                -- Sales Income
-                (SELECT SUM(total_price) FROM invoice_table WHERE invoice_created_at BETWEEN ? AND ?) AS income,
-                
-                -- Sales Discount Expense
-                (SELECT SUM(discount) FROM invoice_table WHERE invoice_created_at BETWEEN ? AND ?) AS expense,
-                
-                -- Supplier Credit (Amount Owed)
-                (SELECT SUM(credit) FROM supplier WHERE created_at BETWEEN ? AND ?) AS supplier_credit,
-                
-                -- Supplier Payments (Amount Paid)
-                (SELECT SUM(debit) FROM supplier WHERE created_at BETWEEN ? AND ?) AS supplier_payments
-        `;
+                          SELECT
+                          SUM(debit) AS supplier_payments,
+                          SUM(credit) AS supplier_income
+                          FROM
+                          supplier
+                          WHERE
+                          created_at BETWEEN ? AND ?;
+                        `;
 
-            // Execute the query
-            db.query(query, [startDate, endDate, startDate, endDate, startDate, endDate, startDate, endDate], (err, results) => {
-                if (err) {
-                    return reject(err); // Reject the promise with error
-                }
 
-                // Calculate Supplier Payments Balance
-                const supplier_credit = results[0].supplier_credit || 0;
-                const supplier_payments = results[0].supplier_payments || 0;
-                const supplier_balance = supplier_credit - supplier_payments;
+            db.query(queryIncome, [startDate, endDate], (err, incomeResults) => {
+                if (err) return reject(err);
 
-                // Add the balance to the result
-                results[0].supplier_balance = supplier_balance;
+                resolve({
+                    totalIncome: incomeResults[0].totalIncome || 0,
 
-                resolve(results[0]); // Resolve with the final result
+                });
             });
         });
+
     }
-
-
 }
+
+
+
 
 
 

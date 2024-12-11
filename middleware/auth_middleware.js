@@ -1,5 +1,6 @@
 const db = require("../config/Database");
 const jwt = require("jsonwebtoken"); 
+const rateLimit = require('express-rate-limit');
 
 
 const authMiddleware = (req, res, next) => {
@@ -58,6 +59,16 @@ const adminOrStaff = (req, res, next) => {
   next();
 };
 
-module.exports = { authMiddleware, adminOnly ,staffOnly,adminOrStaff};
+
+
+
+// Rate limiter middleware
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Limit each IP to 10 requests per windowMs
+  message: "Too many requests, please try again later.",
+});
+
+module.exports = { authMiddleware, adminOnly, staffOnly, adminOrStaff, limiter };
 
 

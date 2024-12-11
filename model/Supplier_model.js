@@ -106,7 +106,7 @@ class Supplier {
         }
 
         const result = await Supplier.query(
-            'INSERT INTO supplier (company_name, phone_number, email, supplier_gst_number, address, city, state, postal_code, country, status, credit, debit, balance) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            'INSERT INTO supplier (company_name, phone_number, supplier_gst_number,email, address, city, state, postal_code, country, status, credit, debit, balance) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [company_name, phone_number, supplier_gst_number, email, address, city, state, postal_code, country, status, credit, debit, calculatedBalance]
         );
         return result.insertId;

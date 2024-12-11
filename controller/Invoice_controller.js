@@ -13,102 +13,6 @@ exports.generateInvoiceNumber = async (req, res) => {
 };
 
 // //insert invoice details
-// exports.createInvoice = async (req, res) => {
-//     try {
-//         const {
-//             customer_id,
-//             products, // Array of { product_id, quantity }
-//             payment_status,
-//         } = req.body;
-
-//         // Validate customer existence
-//         const customerExists = await Invoice.checkCustomerExists(customer_id);
-//         if (!customerExists) {
-//             return res.status(404).json({ message: 'Customer not found' });
-//         }
-
-//         // Initialize totals and discount array
-//         let totalPrice = 0;
-//         let totalGST = 0;
-//         const productDiscounts = []; // To store individual product discounts
-
-//         // Validate products and calculate totals
-//         for (const item of products) {
-//             const productDetails = await Invoice.checkProductExists(item.product_id);
-//             if (!productDetails) {
-//                 return res.status(404).json({ message: `Product with ID ${item.product_id} not found` });
-//             }
-//             if (productDetails.product_quantity < item.quantity) {
-//                 return res.status(400).json({
-//                     message: `Insufficient stock for product with ID ${item.product_id}`,
-//                 });
-//             }
-
-//             // Calculate the price and GST for this product
-//             const productTotal = productDetails.selling_price * item.quantity;
-//             const productGST = (productTotal * productDetails.GST) / 100;
-//             const productDiscount = (productTotal * productDetails.product_discount) / 100;
-
-//             // Add to totals
-//             totalPrice += productTotal;
-//             totalGST = parseFloat((totalGST + productGST).toFixed(2));
-
-//             // Store individual product discount
-//             productDiscounts.push(parseFloat(productDiscount.toFixed(2))); // Rounded to 2 decimals
-//         }
-
-//         // Calculate total discount
-//         const totalDiscount = productDiscounts.reduce((sum, discount) => sum + discount, 0);
-
-//         // Calculate final price after adding GST and subtracting total discount
-//         const finalPrice = parseFloat((totalPrice + totalGST - totalDiscount).toFixed(2));
-
-//         if (isNaN(finalPrice) || isNaN(totalPrice) || isNaN(totalGST)) {
-//             return res.status(400).json({ message: 'Error in calculating prices' });
-//         }
-
-//         // Generate invoice number
-//         const invoiceNumber = await Invoice.generateInvoiceNumber();
-
-//         try {
-//             // Update stock for all products
-//             for (const item of products) {
-//                 await Invoice.updateStock(item.product_id, item.quantity);
-//             }
-
-//             // Create the invoice
-//             const invoiceData = {
-//                 invoice_number: invoiceNumber,
-//                 customer_id,
-//                 product_id: products.map((p) => p.product_id), // Extract product IDs
-//                 quantity: products.map((p) => p.quantity), // Extract quantities
-//                 discount: productDiscounts, // Individual discounts
-//                 total_price: totalPrice,
-//                 final_price: finalPrice,
-//                 payment_status,
-//             };
-
-//             const invoice = await Invoice.createInvoice(invoiceData);
-
-//             res.status(201).json({
-//                 message: 'Invoice created successfully',
-//                 invoice,
-//                 total_price: totalPrice,
-//                 total_gst: totalGST,
-//                 total_discount: totalDiscount,
-//                 final_price: finalPrice,
-//             });
-//         } catch (error) {
-//             console.error('Error creating invoice:', error);
-//             res.status(500).json({ message: 'Internal Server Error' });
-//         }
-//     } catch (error) {
-//         console.error('Error creating invoice:', error);
-//         res.status(500).json({ message: 'Internal Server Error' });
-//     }
-// };
-
-
 
 exports.createInvoice = async (req, res) => {
     try {
@@ -225,6 +129,12 @@ exports.createInvoice = async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
+
+
+
+
+
+
 
 
 
@@ -364,78 +274,6 @@ exports.getInvoiceById = async (req, res) => {
     }
 };
 
-// exports.downloadInvoicePdf = async (req, res) => {
-//     try {
-//         const { id } = req.params;
-
-//         if (!id || isNaN(Number(id))) {
-//             return res.status(400).json({ message: "Invalid invoice ID" });
-//         }
-
-//         const invoice = await Invoice.getInvoiceById(id);
-
-//         if (!invoice) {
-//             return res.status(404).json({ message: "Invoice not found" });
-//         }
-
-//         const doc = new PDFDocument();
-
-//         res.setHeader('Content-Type', 'application/pdf');
-//         res.setHeader('Content-Disposition', `attachment; filename=Invoice_${invoice.invoice_number}.pdf`);
-
-//         doc.pipe(res);
-
-//         // Add shop details
-//         doc.fontSize(20).text(invoice.shop.pharmacy_name, { align: 'center' });
-//         doc.fontSize(12).text(`Address: ${invoice.shop.pharmacy_address}`);
-//         doc.text(`GST: ${invoice.shop.owner_GST_number}`);
-//         doc.text(`Pincode: ${invoice.shop.pincode}`);
-
-//         doc.moveDown();
-
-//         // Add customer details
-//         doc.fontSize(16).text(`Invoice Number#${invoice.invoice_number}`, { align: 'center' });
-//         doc.moveDown();
-//         doc.fontSize(12).text(`Customer Name: ${invoice.customer_name}`);
-//         doc.text(`Phone: ${invoice.phone}`);
-//         doc.text(`Email: ${invoice.email}`);
-//         doc.text(`Address: ${invoice.address}`);
-
-//         doc.moveDown();
-
-//         // Add product details
-
-//         doc.fontSize(14).text('Products:');
-//         invoice.products.forEach((product, index) => {
-//             doc.text(
-//                 `${index + 1}. ${product.product_name} - Batch: ${product.product_batch_no}, Qty: ${invoice.invoice_quantity}, MRP: ${product.product_price}, selling Price: ${product.selling_price}, GST: ${product.product_gst}%`
-//             );
-//             console.log(invoice.invoice_quantity);
-//         });
-
-//         doc.moveDown();
-
-//         // Add invoice summary
-//         doc.fontSize(12).text(`Subtotal: ${invoice.total_price}`);
-//         doc.text(`Discount: ${invoice.discount}`);
-//         doc.text(`Final Price: ${invoice.final_price}`);
-//         // doc.text(`Created At: ${invoice.invoice_created_at}`);
-//         // doc.text(`Updated At: ${invoice.invoice_updated_at}`);
-
-//         doc.end();
-//     } catch (error) {
-//         console.error("Error downloading invoice PDF:", error);
-//         res.status(500).json({ message: "Server error", error: error.message });
-//     }
-// };
-
-
-
-
-
-
-
-// Delete Invoice
 
 
 
@@ -534,6 +372,7 @@ exports.downloadInvoicePdf = async (req, res) => {
 
 
 
+// Delete Invoice
 
 
 exports.deleteInvoice = async (req, res) => {
@@ -562,40 +401,39 @@ exports.deleteInvoice = async (req, res) => {
 // // Get Income and Expense for a Period (1 day, 1 week, 1 month, 1 year)
 
 
+// exports.getIncomeExpense = async (req, res) => {
+//     try {
+//         const { startDate, endDate } = req.body;
 
-exports.getIncomeExpense = async (req, res) => {
-    try {
-        const { startDate, endDate } = req.body;
+//         // Validate input parameters
+//         if (!startDate || !endDate) {
+//             return res.status(400).json({ message: 'Start date and end date are required' });
+//         }
 
-        // Validate input parameters
-        if (!startDate || !endDate) {
-            return res.status(400).json({ message: 'Start date and end date are required' });
-        }
+//         // Fetch the data from the model
+//         const data = await Invoice.getIncomeExpenseData(startDate, endDate);
 
-        // Fetch the data from the model
-        const data = await Invoice.getIncomeExpenseData(startDate, endDate);
+//         if (!data) {
+//             return res.status(404).json({ message: 'No data found for the given date range' });
+//         }
 
-        if (!data) {
-            return res.status(404).json({ message: 'No data found for the given date range' });
-        }
-
-        // Return the results as structured data
-        res.status(200).json({
-            success: true,
-            message: `Income and Expense data for the period from ${startDate} to ${endDate}`,
-            data: {
-                sales_income: data.income || 0,
-                sales_discount_expense: data.expense || 0,
-                supplier_credit: data.supplier_credit || 0,
-                supplier_payments: data.supplier_payments || 0,
-                supplier_balance: data.supplier_balance || 0, // New field
-            }
-        });
-    } catch (err) {
-        console.error("Error fetching income and expense data:", err);
-        res.status(500).json({ message: 'Server error', error: err.message });
-    }
-};
+//         // Return the results as structured data
+//         res.status(200).json({
+//             success: true,
+//             message: `Income and Expense data for the period from ${startDate} to ${endDate}`,
+//             data: {
+//                 sales_income: data.income || 0,
+//                 sales_discount_expense: data.expense || 0,
+//                 supplier_credit: data.supplier_credit || 0,
+//                 supplier_payments: data.supplier_payments || 0,
+//                 supplier_balance: data.supplier_balance || 0, // New field
+//             }
+//         });
+//     } catch (err) {
+//         console.error("Error fetching income and expense data:", err);
+//         res.status(500).json({ message: 'Server error', error: err.message });
+//     }
+// };
 
 
 
