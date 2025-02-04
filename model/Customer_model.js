@@ -1,4 +1,4 @@
-const db = require('../config/Database'); // Make sure this imports your database pool
+    const db = require('../config/Database'); // Make sure this imports your database pool
 
 // class Customer {
 //     // Query wrapper

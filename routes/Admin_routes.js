@@ -6,8 +6,8 @@ const { authMiddleware, adminOnly, limiter, adminOrStaff } = require("../middlew
 
 const router = express.Router();
 
-router.post('/register', AdminController.register); // Admin registration route
-router.post("/login", limiter, AdminController.login); // Admin login route      
+// router.post('/register', AdminController.register); // Admin registration route
+router.post("/login", AdminController.login); // Admin login route      
 
 // Admin-specific routes
 router.get('/getallusers',authMiddleware,adminOnly,AdminController.getAllUsers);

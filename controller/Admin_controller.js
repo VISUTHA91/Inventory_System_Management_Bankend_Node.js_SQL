@@ -31,6 +31,7 @@ const AdminController = {
   login: async (req, res) => {
     try {
       const { email, password } = req.body;
+      
 
       console.log(req.body);  
   
@@ -64,7 +65,7 @@ const AdminController = {
           const token = jwt.sign(
             { id: user.id, email: user.email, role: user.role },
             process.env.JWT_SECRET || "Evvi_Solutions_Private_Limited",
-            { expiresIn: "1h" }
+            { expiresIn: "5h" }
           );
   
           // Respond with the token and user info
@@ -84,7 +85,8 @@ const AdminController = {
       return res.status(500).json({ status: false, message: "Internal server error", error });
     }
   },  
-
+ 
+  
 
   // Request Password Reset (Generate Reset Token)
 

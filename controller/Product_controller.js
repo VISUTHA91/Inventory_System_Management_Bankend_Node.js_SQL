@@ -53,105 +53,136 @@ static getAllProducts(req, res) {
         }
     }
 
+    
 
+static async createProduct(req, res) {
+    const productData = req.body;
 
-    static async createProduct(req, res) {
-        const productData = req.body;
+    if (!productData.product_name || !productData.product_price || !productData.product_quantity) {
+        return res.status(400).json({ message: 'Missing required fields.' });
+    }
 
-        // Validate input
-        if (!productData.product_name || !productData.product_batch_no || !productData.expiry_date || !productData.product_quantity) {
-            return res.status(400).json({ message: 'Missing required fields (product_name, product_batch_no, expiry_date, product_quantity).' });
+    try {
+        // Calculate the selling price and final selling price
+        const sellingPrice = Product.calculateSellingPrice(
+            productData.product_price,
+            productData.product_discount
+        );
+
+        const finalSellingPrice = Product.calculateFinalSellingPrice(
+            sellingPrice,
+            productData.GST
+        );
+
+        // Assign the final selling price to product data
+        productData.selling_price = finalSellingPrice;
+
+        // Check if the product already exists based on product_name, product_batch_no, expiry_date, and product_price
+        const existingProduct = await Product.findByAttributes(
+            productData.product_name,
+            productData.product_batch_no,
+            productData.expiry_date,
+            productData.product_price
+        );
+
+        if (existingProduct && existingProduct.length > 0) {
+            // If the product exists, update the quantity and other relevant fields
+            const product = existingProduct[0];
+            const updatedQuantity = product.product_quantity + productData.product_quantity;
+            const stockStatus = Product.determineStockStatus(updatedQuantity);
+
+            // Update the existing product with the new data
+            await Product.updateQuantity(product.id, updatedQuantity, stockStatus);
+            return res.status(200).json({ message: 'Product updated successfully.' });
+        } else {
+            // If the product does not exist, determine stock status for the new product
+            const stockStatus = Product.determineStockStatus(productData.product_quantity);
+            productData.stock_status = stockStatus;
+
+            // Insert the new product into the database
+            await Product.create(productData);
+            return res.status(201).json({ message: 'Product created successfully.' });
         }
 
-        if (productData.product_quantity <= 0) {
-            return res.status(400).json({ message: 'Product quantity must be greater than 0.' });
-        }
+    } catch (error) {
+        return res.status(500).json({ message: 'Error processing product.', error: error.message });
+    }
+}
 
-        try {
-            // Check for existing product with the same batch number and expiry date
-            const existingProduct = await Product.findByAttributes(productData);
+     
+   
 
-            if (existingProduct) {
-                if (existingProduct.product_name === productData.product_name) {
-                    // Update existing product's quantity
-                    const updatedQuantity = existingProduct.product_quantity + productData.product_quantity;
 
-                    // Determine stock status
-                    let stockStatus = 'Available';
-                    if (updatedQuantity === 0) stockStatus = 'Out of Stock';
-                    else if (updatedQuantity <= 20) stockStatus = 'Low Stock';
 
-                    const result = await Product.updateQuantity(existingProduct.id, updatedQuantity, stockStatus);
 
-                    return res.status(200).json({
-                        message: 'Product quantity updated successfully.',
-                        data: result
-                    });
-                } else {
-                    // Product name differs, create a new row
-                    const stockStatus = productData.product_quantity < 20 ? 'Low Stock' : 'Available';
 
-                    const result = await Product.create({ ...productData, stock_status: stockStatus });
 
-                    return res.status(201).json({
-                        message: 'New product created with a different product name.',
-                        data: result
-                    });
-                }
-            } else {
-                // Create a new product row
-                const stockStatus = productData.product_quantity < 20 ? 'Low Stock' : 'Available';
 
-                const result = await Product.create({ ...productData, stock_status: stockStatus });
 
-                return res.status(201).json({
-                    message: 'New product created successfully.',
-                    data: result
-                });
-            }
-        } catch (err) {
-            res.status(500).json({
-                message: 'Error processing product.',
-                error: err.message
+
+
+static async updateProduct(req, res) {
+    try {
+        const productId = req.params.id;
+        const updatedData = req.body;
+
+        console.log('Incoming Update Request Data:', updatedData);
+
+        // Validate required fields
+        if (!updatedData.product_name || !updatedData.product_category || !updatedData.product_quantity) {
+            return res.status(400).json({
+                message: 'Missing required fields (product_name, product_category, product_quantity).',
             });
         }
-    }
-    
-    
-    
-    
-    
-    
-   
-   
-   
-   
-    static async updateProduct(req, res) {
-        try {
-            const productId = req.params.id;
-            const updatedData = req.body;
-    
-            console.log('Incoming Request Data:', updatedData);
-    
-            // Validate required fields
-            if (!updatedData.product_name || !updatedData.product_category || !updatedData.product_quantity) {
-                return res.status(400).json({ message: 'Missing required fields (product_name, product_category, product_quantity).' });
-            }
-    console.log(updatedData);
-            // Update product in the database
-            const result = await Product.update(productId, updatedData);
-    
-            if (result.affectedRows === 0) {
-                return res.status(404).json({ message: 'Product not found or already deleted.' });
-            }
-    
-            res.status(200).json({ message: 'Product updated successfully.' });
-        } catch (err) {
-            console.error('Error updating product:', err);
-            res.status(500).json({ message: 'Error updating product.', error: err.message });
+
+        // Fetch existing product data for comparison
+        const existingProduct = await Product.findById(productId);
+
+        if (!existingProduct) {
+            return res.status(404).json({ message: 'Product not found.' });
         }
+
+        // Calculate selling price if product_price or product_discount is provided
+        let sellingPrice = existingProduct.selling_price; // Default to existing value
+        if (updatedData.product_price || updatedData.product_discount) {
+            sellingPrice = Product.calculateSellingPrice(
+                updatedData.product_price || existingProduct.product_price,
+                updatedData.product_discount || existingProduct.product_discount
+            );
+        }
+
+        // Calculate final selling price with GST
+        const finalSellingPrice = Product.calculateFinalSellingPrice(
+            sellingPrice,
+            updatedData.GST || existingProduct.GST
+        );
+
+        // Assign calculated selling price to updatedData
+        updatedData.selling_price = finalSellingPrice;
+
+        // Determine stock status based on product_quantity
+        const stockStatus = Product.determineStockStatus(updatedData.product_quantity);
+        updatedData.stock_status = stockStatus;
+
+        console.log('Updated Data for Query:', updatedData);
+
+        // Update product in the database
+        const result = await Product.update(productId, updatedData);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Product not found or already deleted.' });
+        }
+
+        return res.status(200).json({ message: 'Product updated successfully.' });
+    } catch (err) {
+        console.error('Error updating product:', err);
+        return res.status(500).json({ message: 'Error updating product.', error: err.message });
     }
-    
+}
+
+   
+   
+      
    
    
     static async softDeleteProduct(req, res) {
@@ -269,6 +300,9 @@ static getAllProducts(req, res) {
 
 
 module.exports = ProductController;
+
+
+
 
 
 

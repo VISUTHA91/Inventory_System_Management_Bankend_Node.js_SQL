@@ -19,4 +19,6 @@ router.put('/update_category/:id',authMiddleware, adminOnly, CategoryController.
 // Route to delete a category by ID
 router.delete('/del_category/:id', authMiddleware, adminOnly,CategoryController.deleteCategory);
 
+router.get('/categories/filter', CategoryController.filterCategoriesAndProducts);
+
 module.exports = router;

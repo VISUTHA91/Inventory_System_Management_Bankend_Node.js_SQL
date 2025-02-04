@@ -68,36 +68,6 @@ router.post('/import', upload, async (req, res) => {
     }
 });
 
-// // / Multer configuration for file uploads
-// const upload = multer({
-//     storage: multer.memoryStorage(),
-//     fileFilter: (req, file, cb) => {
-//         if (
-//             file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
-//             file.mimetype === 'application/zip'
-//         ) {
-//             cb(null, true);
-//         } else {
-//             cb(new Error('Invalid file type. Only .xlsx or .zip allowed.'));
-//         }
-//     },
-// }).single('file');
-
-// // import route path
-
-// router.post('/import', upload, async (req, res) => {
-//     const fileBuffer = req.file.buffer;
-//     const isZip = req.file.mimetype === 'application/zip';
-
-//     const result = await productImportController.importProductsToExcel(fileBuffer, isZip);
-//     if (result.success) {
-//         return res.status(200).json(result);
-//     } else {
-//         return res.status(400).json(result);
-//     }
-// });
-
-// export route path
 
 router.get('/export', productExportController.exportProductsToExcel);
 

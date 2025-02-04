@@ -4,33 +4,67 @@ const jwt = require('jsonwebtoken');
 const pool = require('../config/Database');
 
 const StaffController = {
-  // Staff Registration
-  register: (req, res) => {
+  // // Staff Registration
+  // register: (req, res) => {
 
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Access denied: Admins only' });
+  //   if (req.user.role !== 'admin') {
+  //     return res.status(403).json({ message: 'Access denied: Admins only' });
+  //   }
+
+
+  //   const { username, email, password, role, contact_number, address_details, user_id_proof = 'staff' } = req.body;
+
+  //   console.log(req.body);
+
+  //   // Hash the password before saving
+  //   bcrypt.hash(password, 10, (err, hashedPassword) => {
+  //     if (err) {
+  //       return res.status(500).json({ message: 'Error hashing password', error: err });
+  //     }
+
+  //     // Save the staff to the database
+  //     User.create(username, email, hashedPassword, role, contact_number, address_details, user_id_proof,(err, result) => {
+  //       if (err) {
+  //         return res.status(500).json({ message: 'Error registering staff', error: err });
+  //       }
+  //       res.status(201).json({ message: 'Staff registered successfully' });
+  //     });
+  //   });
+  // },
+
+ // Staff Registration
+register: (req, res) => {
+
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Access denied: Admins only' });
+  }
+
+  const { username, email, password, role = 'staff', contact_number, address_details, user_id_proof = 'staff' } = req.body;
+
+  console.log(req.body);
+
+  // Validate the required fields
+  if (!username || !email || !password || !contact_number || !address_details) {
+    return res.status(400).json({ message: 'Please provide all required fields: username, email, password, contact_number, and address_details' });
+  }
+
+  // Hash the password before saving
+  bcrypt.hash(password, 10, (err, hashedPassword) => {
+    if (err) {
+      return res.status(500).json({ message: 'Error hashing password', error: err });
     }
 
-
-    const { username, email, password, role = 'staff' } = req.body;
-
-    // Hash the password before saving
-    bcrypt.hash(password, 10, (err, hashedPassword) => {
+    // Save the staff to the database
+    User.create(username, email, hashedPassword, role, contact_number, address_details, user_id_proof, (err, result) => {
       if (err) {
-        return res.status(500).json({ message: 'Error hashing password', error: err });
+        return res.status(500).json({ message: 'Error registering staff', error: err });
       }
-
-      // Save the staff to the database
-      User.create(username, email, hashedPassword, role, (err, result) => {
-        if (err) {
-          return res.status(500).json({ message: 'Error registering staff', error: err });
-        }
-        res.status(201).json({ message: 'Staff registered successfully' });
-      });
+      res.status(201).json({ message: 'Staff registered successfully' });
     });
-  },
+  });
+},
 
- 
+
 
   login: async (req, res) => {
     try {

@@ -45,7 +45,7 @@ class Invoice {
 
     // Check if product exists and fetch details
     static async checkProductExists(productId) {
-        const query = 'SELECT id, selling_price, product_quantity ,GST,product_discount FROM product_table WHERE id = ?';
+        const query = 'SELECT id,product_name, product_price,selling_price, product_quantity ,GST,product_discount FROM product_table WHERE id = ?';
         const [results] = await db.promise().query(query, [productId]);
         return results.length > 0 ? results[0] : null;
     }
@@ -66,60 +66,67 @@ class Invoice {
     }
 
 
-    // Invoice creation logic
-    static async createInvoice(data) {
-        const {
-            invoice_number,
-            customer_id,
-            product_id,
-            quantity,
-            total_price,
-            discount,
-            final_price,
-            payment_status,
-        } = data;
 
-        console.log(discount);
 
-        console.log(data);
+// // Create a new product
 
-        // Ensure prices and discounts are valid (no NaN values)
-        if (isNaN(total_price) || isNaN(final_price)) {
-            throw new Error('Error in calculating prices');
-        }
+ // Invoice creation logic
+ static async createInvoice(data) {
+    const {
+        invoice_number,
+        customer_id,
+        product_id,
+        quantity,
+        total_price,
+        discount,
+        final_price,                 
+        payment_status
+    } = data;
 
-        const query = `
-        INSERT INTO invoice_table (
-            invoice_number, customer_id, product_id, quantity, total_price, 
-            discount, final_price, payment_status
-        ) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `;
+    console.log(discount);
 
-        const [result] = await db.promise().query(query, [
-            invoice_number,
-            customer_id,
-            JSON.stringify(product_id), // Convert array to JSON string
-            JSON.stringify(quantity), // Convert array to JSON string
-            total_price,
-            JSON.stringify(discount), // Store discount as a JSON array
-            final_price,
-            payment_status,
-        ]);
+    console.log(data);
 
-        // Return inserted details
-        return {
-            invoice_number,
-            customer_id,
-            product_id,
-            quantity,
-            total_price,
-            discount,
-            final_price,
-            payment_status,
-            invoice_id: result.insertId, // Add the generated invoice ID
-        };
+    // Ensure prices and discounts are valid (no NaN values)
+    if (isNaN(total_price) || isNaN(final_price)) {
+        throw new Error('Error in calculating prices');
     }
+
+    const query = `
+    INSERT INTO invoice_table (
+        invoice_number, customer_id, product_id, quantity, total_price, 
+        discount, final_price, payment_status
+    ) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ? )
+`;
+
+    const [result] = await db.promise().query(query, [
+        invoice_number,
+        customer_id,
+        JSON.stringify(product_id), // Convert array to JSON string
+        JSON.stringify(quantity), // Convert array to JSON string
+        total_price,
+        JSON.stringify(discount), // Store discount as a JSON array
+        final_price,       
+        payment_status
+    ]);
+
+    // Return inserted details
+    return {
+        invoice_number,
+        customer_id,
+        product_id,
+        quantity,
+        total_price,
+        discount,
+        final_price,        
+        payment_status,
+        invoice_id: result.insertId // Add the generated invoice ID
+    };
+}
+
+
+
 
     //get All invoice
 
@@ -280,115 +287,7 @@ class Invoice {
 
 
 
-
-    //my correct code
-
-    // static getInvoiceById(id) {
-    //     return new Promise((resolve, reject) => {
-    //         // Query to fetch the invoice details along with customer and product details
-    //         const invoiceQuery = `
-    //         SELECT 
-    //             i.id AS invoice_id,
-    //             i.invoice_number,
-    //             i.customer_id,
-    //             i.quantity AS invoice_quantity, 
-    //             i.total_price,
-    //             i.discount,
-    //             i.final_price,
-    //             i.invoice_created_at,
-    //             i.invoice_updated_at,
-    //             c.customer_name,
-    //             c.phone,
-    //             c.email,
-    //             c.address,
-    //             CONCAT('[', GROUP_CONCAT(
-    //                 CONCAT(
-    //                     '{"product_id":', p.id,
-    //                     ',"product_name":', JSON_QUOTE(p.product_name),
-    //                     ',"product_batch_no":', JSON_QUOTE(p.product_batch_no),
-    //                     ',"selling_price":', p.selling_price,
-    //                     ',"product_quantity":', p.product_quantity,
-    //                     ',"product_gst":', p.GST,
-    //                     '}'
-    //                 )
-    //             ), ']') AS products
-    //         FROM invoice_table i
-    //         JOIN customer_table c ON i.customer_id = c.customer_id
-    //         JOIN product_table p ON FIND_IN_SET(p.id, REPLACE(REPLACE(i.product_id, '[', ''), ']', ''))
-    //         WHERE i.id = ?
-    //         GROUP BY i.id;
-    //         `;
-
-    //         // Query to fetch the shop details (assuming one shop per invoice)
-    //         const shopQuery = `
-    //         SELECT 
-    //             shop_id,
-    //             pharmacy_name,
-    //             pharmacy_address,
-    //             pincode,
-    //             owner_GST_number,
-    //             allow_registration,
-    //             description AS shop_description
-    //         FROM shop_table
-    //         WHERE shop_id = (SELECT shop_id FROM invoice_table WHERE id = ?);
-    //         `;
-
-    //         // Execute the first query to get the invoice details
-    //         db.query(invoiceQuery, [id], (err, invoiceResults) => {
-    //             if (err) {
-    //                 console.error('Database error during getting invoice details:', err);
-    //                 return reject({
-    //                     message: 'Database error occurred while fetching invoice details.',
-    //                     error: err
-    //                 });
-    //             }
-
-    //             if (invoiceResults.length === 0) {
-    //                 console.log('Invoice not found for ID:', id);
-    //                 return reject({
-    //                     message: `Invoice with ID ${id} not found in the database.`,
-    //                     error: `Invoice with ID ${id} does not exist.`
-    //                 });
-    //             }
-
-    //             // Parse the products field
-    //             const invoice = invoiceResults[0];
-    //             invoice.products = JSON.parse(invoice.products || '[]');
-
-    //             // Execute the second query to get the shop details
-    //             db.query(shopQuery, [id], (err, shopResults) => {
-    //                 if (err) {
-    //                     console.error('Database error during getting shop details:', err);
-    //                     return reject({
-    //                         message: 'Database error occurred while fetching shop details.',
-    //                         error: err
-    //                     });
-    //                 }
-
-    //                 if (shopResults.length === 0) {
-    //                     console.log('Shop not found for Invoice ID:', id);
-    //                     return reject({
-    //                         message: `Shop details for Invoice ID ${id} not found.`,
-    //                         error: `Shop details for Invoice ID ${id} do not exist.`
-    //                     });
-    //                 }
-
-    //                 // Combine invoice and shop details
-    //                 const shop = shopResults[0];
-    //                 const invoiceWithShop = { ...invoice, shop };
-
-    //                 // Log the combined details
-    //                 console.log("Combined Invoice Details:", JSON.stringify(invoiceWithShop, null, 2));
-
-    //                 resolve(invoiceWithShop);
-    //             });
-    //         });
-    //     });
-    // }
-
-
-
-    //getbyid   i.quantity AS invoice_quantity, 
+   //getbyid   i.quantity AS invoice_quantity, 
 
     static getInvoiceById(id) {
         return new Promise((resolve, reject) => {
@@ -471,12 +370,6 @@ class Invoice {
 
 
 
-
-
-
-
-
-
     static deleteInvoice(id) {
         return new Promise((resolve, reject) => {
             const query = `DELETE FROM invoice_table WHERE id = ?`;
@@ -496,74 +389,105 @@ class Invoice {
 
 
 
-    // static getIncomeExpenseData(startDate, endDate) {
+    static getMostSoldMedicines = (req, res) => {
+        return new Promise((resolve, reject) => {
+            // Adjust the query to match your database schema and logic
+            const query = `
+            SELECT 
+    p.product_name,
+    SUM(JSON_VALUE(i.quantity, CONCAT('$[', idx.idx, ']'))) AS total_quantity_sold,
+    ROUND(
+        (
+            SUM(JSON_VALUE(i.quantity, CONCAT('$[', idx.idx, ']'))) /
+            (
+                SELECT SUM(JSON_VALUE(i.quantity, CONCAT('$[', idx.idx, ']')))
+                FROM invoice_table i
+                CROSS JOIN (
+                    SELECT 0 AS idx UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3
+                ) idx
+                WHERE i.invoice_created_at >= NOW() - INTERVAL 30 DAY
+            )
+        ) * 100, 
+        2
+    ) AS percentage_of_total_sales
+FROM 
+    invoice_table i
+CROSS JOIN (
+    SELECT 0 AS idx UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3
+) idx
+JOIN 
+    product_table p
+    ON JSON_VALUE(i.product_id, CONCAT('$[', idx.idx, ']')) = p.id
+WHERE 
+    i.invoice_created_at >= NOW() - INTERVAL 30 DAY
+GROUP BY 
+    p.product_name
+ORDER BY 
+    total_quantity_sold DESC;
+
+
+
+`;
+    
+            // Run the query to fetch most sold medicines in the last 30 days
+            db.query(query, (err, results) => {
+                console.log("Most sold medicines query results:", results); 
+                if (err) {
+                    console.error('Database error during fetching most sold medicines:', err);
+                    return reject(err); // Reject with error if query fails
+                }
+    
+                if (results.length === 0) {
+                    resolve({
+                        message: "No sales data found in the last 30 days",
+                        data: [],
+                    });
+                } else {
+                    resolve({
+                        message: "Most sold medicines in the last 30 days",
+                        data: results,
+                    });
+                }
+            });
+        });
+    };
+    
+    
+    
+    
+    
+
+
+
+    // static calculateIncome(startDate, endDate) {
     //     return new Promise((resolve, reject) => {
+    //         const queryIncome = `SELECT SUM(final_price) AS totalIncome FROM invoice_table WHERE invoice_created_at BETWEEN ? AND ?`;
+
     //         const query = `
-    //         SELECT
-    //             -- Sales Income
-    //             (SELECT SUM(total_price) FROM invoice_table WHERE invoice_created_at BETWEEN ? AND ?) AS income,
+    //                       SELECT
+    //                       SUM(paid_amount) AS total_paid_to_supplier,
+    //                       SUM(purchased_amount) AS total_purchased_from_supplier
+    //                       FROM
+    //                       supplier
+    //                       WHERE
+    //                       created_at BETWEEN ? AND ?;
+    //                     `;
 
-    //             -- Sales Discount Expense
-    //             (SELECT SUM(discount) FROM invoice_table WHERE invoice_created_at BETWEEN ? AND ?) AS expense,
 
-    //             -- Supplier Credit (Amount Owed)
-    //             (SELECT SUM(credit) FROM supplier WHERE created_at BETWEEN ? AND ?) AS supplier_credit,
+    //         db.query(queryIncome, [startDate, endDate], (err, incomeResults) => {
+    //             if (err) return reject(err);
 
-    //             -- Supplier Payments (Amount Paid)
-    //             (SELECT SUM(debit) FROM supplier WHERE created_at BETWEEN ? AND ?) AS supplier_payments
-    //     `;
+    //             resolve({
+    //                 totalIncome: incomeResults[0].totalIncome || 0,
 
-    //         // Execute the query
-    //         db.query(query, [startDate, endDate, startDate, endDate, startDate, endDate, startDate, endDate], (err, results) => {
-    //             if (err) {
-    //                 return reject(err); // Reject the promise with error
-    //             }
-
-    //             // Calculate Supplier Payments Balance
-    //             const supplier_credit = results[0].supplier_credit || 0;
-    //             const supplier_payments = results[0].supplier_payments || 0;
-    //             const supplier_balance = supplier_credit - supplier_payments;
-
-    //             // Add the balance to the result
-    //             results[0].supplier_balance = supplier_balance;
-
-    //             resolve(results[0]); // Resolve with the final result
+    //             });
     //         });
     //     });
+
     // }
 
 
-    // Fetch income and expense reports
-
-
-
-
-    static calculateIncome(startDate, endDate) {
-        return new Promise((resolve, reject) => {
-            const queryIncome = `SELECT SUM(final_price) AS totalIncome FROM invoice_table WHERE invoice_created_at BETWEEN ? AND ?`;
-
-            const query = `
-                          SELECT
-                          SUM(debit) AS supplier_payments,
-                          SUM(credit) AS supplier_income
-                          FROM
-                          supplier
-                          WHERE
-                          created_at BETWEEN ? AND ?;
-                        `;
-
-
-            db.query(queryIncome, [startDate, endDate], (err, incomeResults) => {
-                if (err) return reject(err);
-
-                resolve({
-                    totalIncome: incomeResults[0].totalIncome || 0,
-
-                });
-            });
-        });
-
-    }
+    
 }
 
 

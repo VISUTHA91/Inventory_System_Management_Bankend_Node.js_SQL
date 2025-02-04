@@ -23,6 +23,9 @@ router.put('/invoiceup/:id', invoiceController.updateInvoice);
 // Delete Invoice
 router.delete('/invoicedel/:id', invoiceController.deleteInvoice);
 
+// Route to get most sold medicines in the last 30 days
+router.get('/most-sold-medicines', invoiceController.getMostSoldMedicinesController);
+
 
 
 // // Route to get income and expense details for a specific time range

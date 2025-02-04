@@ -1,5 +1,5 @@
 {
-  "name": "inventory_management_system",
+  "name": "inventory_management_medical_store",
   "version": "1.0.0",
   "description": "Backend for Inventory System",
   "main": "index.js",

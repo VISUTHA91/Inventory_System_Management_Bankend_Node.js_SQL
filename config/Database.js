@@ -20,7 +20,7 @@ connection.getConnection((err) => {
     console.error('Error connecting to MySQL:', err.stack);
     return;
   }
-  console.log('Connected to MySQL');
+  console.log('Connected to MySQL and Medical shop');
   
 });
 

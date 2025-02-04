@@ -14,9 +14,10 @@ exports.generateInvoiceNumber = async (req, res) => {
 
 // //insert invoice details
 
+
 exports.createInvoice = async (req, res) => {
     try {
-        const { customer_id, products, payment_status } = req.body;
+        const { customer_id, products, payment_status} = req.body;
         console.log('Products:', products);
 
         // Validate customer existence
@@ -46,7 +47,7 @@ exports.createInvoice = async (req, res) => {
             }
 
             // Calculate the price, GST, and discount for this product
-            const unitPrice = parseFloat(productDetails.selling_price);
+            const unitPrice = parseFloat(productDetails.product_price);
             const subtotal = unitPrice * item.quantity;
 
             // Calculate GST and Discount for this product
@@ -97,7 +98,7 @@ exports.createInvoice = async (req, res) => {
                 discount: totalDiscount.toFixed(2),
                 total_price: totalPrice.toFixed(2),
                 final_price: finalPrice.toFixed(2),
-                payment_status,
+                payment_status
             };
 
             // Create the invoice in the database
@@ -111,6 +112,7 @@ exports.createInvoice = async (req, res) => {
                     invoice_number: invoice.invoice_number,
                     customer_id: invoice.customer_id,
                     payment_status: invoice.payment_status,
+                 
                     products: detailedProducts,
                     summary: {
                         total_price: totalPrice.toFixed(2),
@@ -129,9 +131,6 @@ exports.createInvoice = async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
-
-
-
 
 
 
@@ -221,34 +220,6 @@ exports.updateInvoice = async (req, res) => {
 // };
 
 
-
-
-
-
-
-//get the invoice by id
-
-
-// exports.getInvoiceById = async (req, res) => {
-//     try {
-//         const { id } = req.params;
-
-//         if (!id || isNaN(Number(id))) {
-//             return res.status(400).json({ message: "Invalid invoice ID" });
-//         }
-
-//         const invoice = await Invoice.getInvoiceById(id);
-
-//         if (!invoice) {
-//             return res.status(404).json({ message: "Invoice not found" });
-//         }
-
-//         res.status(200).json({ data: invoice });
-//     } catch (error) {
-//         console.error("Error fetching invoice by ID:", error);
-//         res.status(500).json({ message: "Server error", error: error.message });
-//     }
-// };
 
 
 const PDFDocument = require('pdfkit');
@@ -436,4 +407,18 @@ exports.deleteInvoice = async (req, res) => {
 // };
 
 
+
+exports.getMostSoldMedicinesController = (req, res) => {
+    Invoice.getMostSoldMedicines()
+        .then(response => {
+            return res.status(200).json(response); // Send successful response
+        })
+        .catch(error => {
+            console.error(error);
+            return res.status(500).json({
+                message: "Error fetching most sold medicines",
+                error: error.message,
+            });
+        });
+};
 

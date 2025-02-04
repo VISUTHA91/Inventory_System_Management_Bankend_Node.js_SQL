@@ -1,9 +1,10 @@
 const db = require('../config/Database'); 
 
 const User = {
-  create: (username, email, hashedPassword, role, callback) => {
-    const query = 'INSERT INTO users (username, email, encrypted_password, role) VALUES (?, ?, ?, ?)';
-    db.query(query, [username, email, hashedPassword, role], callback);
+  create: (username, email, hashedPassword, role, contact_number, address_details, user_id_proof, callback) => {
+    const query = `INSERT INTO users (username, email, encrypted_password, role, contact_number, address_details, user_id_proof)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)`;
+    db.query(query, [username, email, hashedPassword, role, contact_number, address_details, user_id_proof], callback);
   },
 
   findByEmail: (email, callback) => {

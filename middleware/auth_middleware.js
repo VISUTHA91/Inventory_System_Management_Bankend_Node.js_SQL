@@ -16,6 +16,7 @@ const authMiddleware = (req, res, next) => {
     token,
     process.env.JWT_SECRET || "Evvi_Solutions_Private_Limited",
     (err, decoded) => {
+      console.log(err);
       if (err) {
         if (err.name === "TokenExpiredError") {
           return res
