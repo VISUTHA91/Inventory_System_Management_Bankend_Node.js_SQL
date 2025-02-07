@@ -16,6 +16,12 @@ const User = {
       callback(err, results); // Pass the results back to the callback
     });
   },
+
+  // ✅ Check if Aadhar number already exists
+  findByAadhar: (user_id_proof, callback) => {
+    const query = 'SELECT * FROM users WHERE user_id_proof = ?';
+    db.query(query, [user_id_proof], callback);
+  },
   
 
   findById: (id, callback) => {
@@ -38,10 +44,28 @@ const User = {
     db.query(query, [token, expiry, email], callback);
   },
 
-  updatePassword: (email, hashedPassword, callback) => {
-    const query = 'UPDATE users SET password = ? WHERE email = ?';
-    db.query(query, [hashedPassword, email], callback);
+  // updatePassword: (email, hashedPassword, callback) => {
+  //   const query = 'UPDATE users SET password = ? WHERE email = ?';
+  //   db.query(query, [hashedPassword, email], callback);
+  // },
+
+   // ✅ Update user details with password
+   update: (id, username, email, hashedPassword, role, contact_number, address_details, user_id_proof, callback) => {
+    const query = `UPDATE users 
+                   SET username = ?, email = ?, encrypted_password = ?, role = ?, 
+                       contact_number = ?, address_details = ?, user_id_proof = ? 
+                   WHERE id = ?`;
+    db.query(query, [username, email, hashedPassword, role, contact_number, address_details, user_id_proof, id], callback);
   },
+
+  // // ✅ Update user details without changing password
+  // updateWithoutPassword: (id, username, email, role, contact_number, address_details, user_id_proof, callback) => {
+  //   const query = `UPDATE users 
+  //                  SET username = ?, email = ?, role = ?, 
+  //                      contact_number = ?, address_details = ?, user_id_proof = ? 
+  //                  WHERE id = ?`;
+  //   db.query(query, [username, email, role, contact_number, address_details, user_id_proof, id], callback);
+  // },
 
   clearResetToken: (email, callback) => {
     const query = 'UPDATE users SET reset_token = NULL, reset_token_expiry = NULL WHERE email = ?';

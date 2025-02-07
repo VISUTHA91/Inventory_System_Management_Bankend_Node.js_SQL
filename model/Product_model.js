@@ -183,9 +183,9 @@ static determineStockStatus(quantity) {
             const query = `
                             INSERT INTO product_table 
                             (product_name, product_category, product_quantity, product_price, product_description,
-                            generic_name, product_batch_no, expiry_date, product_discount, supplier_price, supplier,
-                            brand_name, selling_price, GST, stock_status, created_at, updated_at, deleted_at, is_deleted)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), NULL, 0)
+                            generic_name, product_batch_no, MFD,expiry_date, product_discount, supplier_price, supplier,
+                            brand_name, selling_price, GST, stock_status, hsn_code, created_at, updated_at, deleted_at, is_deleted)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), NULL, 0)
                         `;
             db.query(query, [
                 productData.product_name,
@@ -195,6 +195,7 @@ static determineStockStatus(quantity) {
                 productData.product_description,
                 productData.generic_name,
                 productData.product_batch_no,
+                productData.MFD,
                 productData.expiry_date,
                 productData.product_discount,
                 productData.supplier_price,
@@ -202,7 +203,8 @@ static determineStockStatus(quantity) {
                 productData.brand_name,
                 productData.selling_price,
                 productData.GST,
-                productData.stock_status
+                productData.stock_status,
+                productData.hsn_code 
             ], (err, result) => {
                 if (err) return reject(err);
                 resolve(result);

@@ -90,6 +90,7 @@ class CategoryController {
       if (!category_name) {
         return res.status(400).json({ message: 'Category name is required.' });
       }
+      
 
       const categoryId = await Category.create({ category_name, description });
       res.status(201).json({
@@ -99,6 +100,7 @@ class CategoryController {
     } catch (error) {
       res.status(500).json({
         message: 'Error creating category.',
+        
         error: error.message,
       });
     }
@@ -108,13 +110,14 @@ class CategoryController {
 
   static async filterCategoriesAndProducts(req, res) {
     try {
-      const { cat_auto_gen_id, product_name, product_id } = req.query;
+      const { cat_auto_gen_id, product_name, product_id, hsn_code } = req.query;
 
       // Pass parameters to the model
       const results = await Category.filterCategoriesAndProducts({
         cat_auto_gen_id,
         product_name,
         product_id,
+        hsn_code
       });
 
       if (results.length === 0) {
