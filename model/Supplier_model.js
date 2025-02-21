@@ -55,11 +55,11 @@ class Supplier {
     
 //already corrected code
 
-    // static async getAll() {
-    //     return await Supplier.query('SELECT * FROM supplier');
-    // }
+    static async getAll() {
+        return await Supplier.query('SELECT * FROM supplier');
+    }
 
-    static async getAll(page, limit) { 
+    static async getAllpage(page, limit) { 
         const offset = (page - 1) * limit; // Calculate offset
     
         // Use this.query to call the query method inside the same class

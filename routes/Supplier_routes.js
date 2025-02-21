@@ -13,6 +13,9 @@ router.get('/supplier-names', authMiddleware,adminOnly,supplierController.getAll
 // Route for getting all suppliers
 router.get('/sup_all', authMiddleware,adminOrStaff,supplierController.getAllSuppliers);
 
+// Route for getting all suppliers
+router.get('/sup_all_pagination', authMiddleware,adminOrStaff,supplierController.getAllSupplierspagination);
+
 
 // Route for getting a supplier by ID
 router.get('/sup_id/:id', authMiddleware,adminOnly,supplierController.getSupplierById);

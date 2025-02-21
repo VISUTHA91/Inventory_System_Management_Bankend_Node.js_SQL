@@ -22,24 +22,24 @@ exports.createSupplier = async (req, res) => {
 };
 
 //my already corrected code
-// exports.getAllSuppliers = async (req, res) => {
-//     try {
-//         const suppliers = await Supplier.getAll();
-//         res.status(200).json(suppliers);
-//     } catch (err) {
-//         console.error(err);
-//         res.status(500).json({ error: 'Failed to fetch suppliers' });
-//     }
-// };
+exports.getAllSuppliers = async (req, res) => {
+    try {
+        const suppliers = await Supplier.getAll();
+        res.status(200).json(suppliers);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to fetch suppliers' });
+    }
+};
 
 
 
-exports.getAllSuppliers = async (req, res) => { 
+exports.getAllSupplierspagination = async (req, res) => { 
     try {
         const page = parseInt(req.query.page) || 1;  // Default to page 1
         const limit = parseInt(req.query.limit) || 10; // Default limit 10 per page
 
-        const { suppliers, totalSuppliers } = await Supplier.getAll(page, limit);
+        const { suppliers, totalSuppliers } = await Supplier.getAllpage(page, limit);
 
         res.status(200).json({
             success: true,
