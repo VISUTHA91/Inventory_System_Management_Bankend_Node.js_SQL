@@ -6,15 +6,20 @@ const formatDate = (date) => {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
-// Create Expense
+// // Create Expense
+
 exports.createExpense = async (req, res) => {
     try {
-        const { category, amount, description } = req.body;
-        if (!category || !amount) {
-            return res.status(400).json({ success: false, message: 'Category and amount are required' });
+        const { category, amount, date, description } = req.body;
+
+        if (!category || !amount || !date) {
+            return res.status(400).json({ success: false, message: 'Category, amount, and expence_date are required' });
         }
 
-        await Expensedetails.create({ category, amount, description });
+        // Format the date before inserting into DB
+        const formattedDate = formatDate(date);
+
+        await Expensedetails.create({ category, amount, date: formattedDate, description });
         res.status(201).json({ success: true, message: 'Expense created successfully' });
     } catch (err) {
         console.error(err);
@@ -22,16 +27,53 @@ exports.createExpense = async (req, res) => {
     }
 };
 
-// Get All Expenses
+//expense details
 exports.getAllExpenses = async (req, res) => {
     try {
-        const [expenses] = await Expensedetails.getAll();
+        const expenses = await Expensedetails.getAll();
+
+        if (!Array.isArray(expenses) || expenses.length === 0) {
+            return res.status(404).json({ success: false, message: "No expenses found" });
+        }
+
         res.status(200).json({ success: true, data: expenses });
+
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ success: false, message: 'Server error', error: err.message });
+        console.error("Database Error:", err);
+        res.status(500).json({ success: false, message: "Server error", error: err.message });
     }
 };
+
+
+// Get all expenses with pagination
+exports.getAllExpensespage = async (req, res) => {
+    try {
+        // Get page and limit from query params, set defaults
+        let { page, limit } = req.query;
+        page = parseInt(page) || 1;
+        limit = parseInt(limit) || 10;
+
+        const { expenses, totalPages, totalRecords } = await Expensedetails.getAllpage(page, limit);
+
+        if (!Array.isArray(expenses) || expenses.length === 0) {
+            return res.status(404).json({ success: false, message: "No expenses found" });
+        }
+
+        res.status(200).json({
+            success: true,
+            currentPage: page,
+            totalPages,
+            totalRecords,
+            data: expenses,
+        });
+
+    } catch (err) {
+        console.error("Database Error:", err);
+        res.status(500).json({ success: false, message: "Server error", error: err.message });
+    }
+};
+
+
 
 // Get Expense By ID
 exports.getExpenseById = async (req, res) => {
@@ -52,9 +94,9 @@ exports.getExpenseById = async (req, res) => {
 exports.updateExpense = async (req, res) => {
     try {
         const { id } = req.params;
-        const { category, amount, description } = req.body;
+        const { category, amount, date, description } = req.body;
 
-        await Expensedetails.update(id, { category, amount, description });
+        await Expensedetails.update(id, { category, amount, date, description });
         res.status(200).json({ success: true, message: 'Expense updated successfully' });
     } catch (err) {
         console.error(err);
@@ -82,47 +124,6 @@ exports.deleteExpense = async (req, res) => {
 //EXpense report details
 
 
-
-exports.getDailyExpenseReport = async (req, res) => {
-    try {
-        const { startDate, endDate } = req.query;
-
-        if (!startDate || !endDate) {
-            return res.status(400).json({
-                success: false,
-                message: "Both startDate and endDate are required"
-            });
-        }
-
-        // Convert to UTC and ensure the format is correct
-        let reportStartDate = new Date(`${startDate}T00:00:00Z`); // UTC start
-        let reportEndDate = new Date(`${endDate}T23:59:59Z`); // UTC end
-
-        // Log the dates for debugging
-        console.log('Report Start Date:', reportStartDate);
-        console.log('Report End Date:', reportEndDate);
-
-        // Call the method to calculate expense
-        const data = await Expensedetails.calculateExpense(reportStartDate.toISOString(), reportEndDate.toISOString());
-console.log(data)
-        if (data && data.length > 0 && data[0].totalExpense !== null) {
-            res.status(200).json({
-                success: true,
-                message: `Daily expense report (${startDate} to ${endDate})`,
-                data: data[0]
-            });
-        } else {
-            res.status(200).json({
-                success: true,
-                message: `No expenses found for (${startDate} to ${endDate})`,
-                data: { totalExpense: 0 }
-            });
-        }
-    } catch (err) {
-        console.error('Error in daily expense report:', err);
-        res.status(500).json({ success: false, message: 'Server error', error: err.message });
-    }
-};
 
 
 
@@ -158,7 +159,7 @@ exports.getMonthlyExpenseReport = async (req, res) => {
     }
 };
 
-// Get Yearly Expense Report
+// // Get Yearly Expense Report
 exports.getYearlyExpenseReport = async (req, res) => {
     try {
         const currentDate = new Date();
@@ -177,3 +178,46 @@ exports.getYearlyExpenseReport = async (req, res) => {
         res.status(500).json({ success: false, message: 'Server error', error: err.message });
     }
 };
+
+
+
+
+//i have to use this below API call for daily monthly yearly it has dynamically work
+exports.getDailyExpenseReport = async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+
+        if (!startDate || !endDate) {
+            return res.status(400).json({
+                success: false,
+                message: "Both startDate and endDate are required"
+            });
+        }
+
+        // Convert to UTC and ensure the format is correct
+        let reportStartDate = new Date(`${startDate}T00:00:00Z`).toISOString(); // Start of the day
+        let reportEndDate = new Date(`${endDate}T23:59:59Z`).toISOString(); // End of the day
+
+        // Log for debugging
+        console.log('Report Start Date:', reportStartDate);
+        console.log('Report End Date:', reportEndDate);
+
+        // Call the modified calculateExpense function with dynamic date range
+        const data = await Expensedetails.calculateExpense(reportStartDate, reportEndDate);
+
+        // Extract the correct totalExpense value
+        const totalExpense = data[0]?.totalExpense ?? 0; // Handle null values properly
+
+        return res.status(200).json({
+            success: true,
+            message: `Daily expense report (${startDate} to ${endDate})`,
+            data: { totalExpense }
+        });
+
+    } catch (err) {
+        console.error('Error in daily expense report:', err);
+        res.status(500).json({ success: false, message: 'Server error', error: err.message });
+    }
+};
+
+

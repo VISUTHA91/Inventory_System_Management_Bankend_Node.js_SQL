@@ -21,15 +21,58 @@ exports.createSupplier = async (req, res) => {
     }
 };
 
-exports.getAllSuppliers = async (req, res) => {
+//my already corrected code
+// exports.getAllSuppliers = async (req, res) => {
+//     try {
+//         const suppliers = await Supplier.getAll();
+//         res.status(200).json(suppliers);
+//     } catch (err) {
+//         console.error(err);
+//         res.status(500).json({ error: 'Failed to fetch suppliers' });
+//     }
+// };
+
+
+
+exports.getAllSuppliers = async (req, res) => { 
     try {
-        const suppliers = await Supplier.getAll();
-        res.status(200).json(suppliers);
+        const page = parseInt(req.query.page) || 1;  // Default to page 1
+        const limit = parseInt(req.query.limit) || 10; // Default limit 10 per page
+
+        const { suppliers, totalSuppliers } = await Supplier.getAll(page, limit);
+
+        res.status(200).json({
+            success: true,
+            message: "Suppliers fetched successfully",
+            page: page,
+            limit: limit,
+            totalSuppliers: totalSuppliers,
+            totalPages: Math.ceil(totalSuppliers / limit),
+            data: suppliers
+        });
+
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to fetch suppliers' });
     }
 };
+
+exports.getAllSupplierNames = async (req, res) => {
+    try {
+        const supplierNames = await Supplier.getAllSupplierNames();
+
+        res.status(200).json({
+            success: true,
+            message: "Supplier names fetched successfully",
+            data: supplierNames.map(supplier => supplier.company_name)
+        });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to fetch supplier names' });
+    }
+};
+
 
 exports.getSupplierById = async (req, res) => {
     try {

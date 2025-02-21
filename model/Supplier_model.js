@@ -53,10 +53,34 @@ class Supplier {
         }
     
     
+//already corrected code
 
-    static async getAll() {
-        return await Supplier.query('SELECT * FROM supplier');
+    // static async getAll() {
+    //     return await Supplier.query('SELECT * FROM supplier');
+    // }
+
+    static async getAll(page, limit) { 
+        const offset = (page - 1) * limit; // Calculate offset
+    
+        // Use this.query to call the query method inside the same class
+        const rows = await this.query(
+            'SELECT * FROM supplier LIMIT ? OFFSET ?',
+            [limit, offset]
+        );
+    
+        // Query to get total count of suppliers
+        const totalRows = await this.query('SELECT COUNT(*) AS total FROM supplier', []);
+        const totalSuppliers = totalRows[0].total;
+    
+        return { suppliers: rows, totalSuppliers };
     }
+    
+    static async getAllSupplierNames() {
+        const rows = await this.query('SELECT company_name FROM supplier', []);
+        return rows;
+    }
+    
+    
 
     static async getById(id) {
         const rows = await Supplier.query('SELECT * FROM supplier WHERE supplier_id = ?', [id]);

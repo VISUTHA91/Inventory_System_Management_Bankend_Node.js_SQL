@@ -5,7 +5,12 @@ const { authMiddleware, adminOnly,adminOrStaff }  = require("../middleware/auth_
 
 
 // Route to get all categories
-router.get('/all_category', authMiddleware, adminOnly,CategoryController.getAllCategories);
+router.get('/all_category', authMiddleware,adminOrStaff,CategoryController.getAllCategories);
+// Route to get all categories
+router.get('/all_category_pagination', authMiddleware,adminOrStaff,CategoryController.getAllCategories_pagination);
+
+// Route to get all category names
+router.get('/category-names', authMiddleware, adminOnly,CategoryController.getAllCategoryNamesHandler);
 
 // Route to get a single category by ID
 router.get('/id_category/:id',authMiddleware, adminOnly, CategoryController.getCategoryById);
@@ -19,6 +24,6 @@ router.put('/update_category/:id',authMiddleware, adminOnly, CategoryController.
 // Route to delete a category by ID
 router.delete('/del_category/:id', authMiddleware, adminOnly,CategoryController.deleteCategory);
 
-router.get('/categories/filter', CategoryController.filterCategoriesAndProducts);
+router.get('/categories/filter',authMiddleware,adminOrStaff, CategoryController.filterCategoriesAndProducts);
 
 module.exports = router;

@@ -30,8 +30,7 @@ const getDailySales = (startDate, endDate) => {
   };
   
   
-
-  
+ 
 
 
 

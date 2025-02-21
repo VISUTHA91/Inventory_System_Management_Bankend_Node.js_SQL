@@ -161,18 +161,36 @@ const AdminController = {
 
   // Get all users
 
+// getAllUsers: (req, res) => {
+//   // Use the pool for the query
+//   pool.query("SELECT * FROM users", (err, results) => {
+//     if (err) {
+//       // If there's an error with the query, send a 500 error response
+//       return res.status(500).json({
+//         status: false,
+//         message: "Database query error",
+//         error: err,
+//       });
+//     }
+//     // Return the users in the response
+//     return res.status(200).json({
+//       status: true,
+//       message: "Users retrieved successfully",
+//       users: results,
+//     });
+//   });
+// },
+
 getAllUsers: (req, res) => {
-  // Use the pool for the query
-  pool.query("SELECT * FROM users", (err, results) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ status: false, message: 'Access denied: Admins only' });
+  }
+
+  User.getAll((err, results) => {
     if (err) {
-      // If there's an error with the query, send a 500 error response
-      return res.status(500).json({
-        status: false,
-        message: "Database query error",
-        error: err,
-      });
+      return res.status(500).json({ status: false, message: "Database query error", error: err });
     }
-    // Return the users in the response
+
     return res.status(200).json({
       status: true,
       message: "Users retrieved successfully",
@@ -180,8 +198,6 @@ getAllUsers: (req, res) => {
     });
   });
 },
-
-
 
   // Delete a user
   deleteUser: (req, res) => {

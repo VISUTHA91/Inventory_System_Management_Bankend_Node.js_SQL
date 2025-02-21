@@ -71,15 +71,42 @@ exports.createCustomer = async (req, res) => {
 
 
 // Get all customers
+// exports.getAllCustomers = async (req, res) => {
+//     try {
+//         const customers = await Customer.getAll();
+//         res.status(200).json(customers);
+//     } catch (err) {
+//         console.error(err);
+//         res.status(500).json({ error: 'Failed to fetch customers' });
+//     }
+// };
+
+
 exports.getAllCustomers = async (req, res) => {
     try {
-        const customers = await Customer.getAll();
-        res.status(200).json(customers);
+        const page = parseInt(req.query.page) || 1; // Default to page 1
+        const limit = parseInt(req.query.limit) || 10; // Default to 10 customers per page
+
+        const customers = await Customer.getAll(page, limit);
+
+        // Handle empty customer list
+        if (customers.length === 0) {
+            return res.status(404).json({ message: 'No customers found' });
+        }
+
+        res.status(200).json({
+            message: 'Customers fetched successfully',
+            page: page,
+            limit: limit,
+            data: customers
+            ////ghjkfghjkjgfghjk
+        });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to fetch customers' });
     }
 };
+
 
 // Get a customer by ID
 exports.getCustomerById = async (req, res) => {

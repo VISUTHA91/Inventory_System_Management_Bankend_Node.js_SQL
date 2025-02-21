@@ -91,85 +91,15 @@ class Category {
 
  //fillter category and product
 
-//already enter the correct code
-// static async filterCategoriesAndProducts({ cat_auto_gen_id, product_name, product_id,category_name }) {
-//   try {
-//     let sql = `
-//       SELECT 
-//         pc.cat_auto_gen_id,
-//         pc.category_name,
-//         pc.description,
-//         p.id AS product_id,           -- Correct column name to 'id' from 'product_id'
-//         p.product_name,
-//         p.product_description,
-//         p.product_price,
-//         p.product_quantity,
-//         p.stock_status,
-//         p.generic_name,
-//         p.product_batch_no,
-//         p.expiry_date,
-//         p.product_discount,
-//         p.supplier_price,
-//         p.supplier,
-//         p.brand_name,
-//         p.selling_price,
-//         p.GST,
-//         p.created_at,
-//         p.updated_at,
-//         p.deleted_at,
-//         p.is_deleted
-//       FROM 
-//         product_category pc
-//       LEFT JOIN 
-//         product_table p ON pc.id = p.product_category  -- Corrected the join condition
-//       WHERE 1=1
-//     `;
-
-//     const params = [];
-
-//     // Add conditions dynamically
-//     if (cat_auto_gen_id) {
-//       sql += ' AND pc.cat_auto_gen_id = ?';
-//       params.push(cat_auto_gen_id);
-//     }
-
-//     if (product_name) {
-//       sql += ' AND p.product_name LIKE ?';
-//       params.push(`%${product_name}%`);
-//     }
-
-//     if (product_id) {
-//       sql += ' AND p.id = ?';    // Correct column name to 'id' from 'product_id'
-//       params.push(product_id);
-//     }
-//   if (category_name) {
-//       sql += ' AND pc.category_name LIKE ?';
-//       params.push(`%${category_name}%`);
-//     }
-
-//     // Execute the query
-//     const results = await queryAsync(sql, params);
-
-//     if (results.length === 0) {
-//       return { message: 'No matching categories or products found.' };
-//     }
-
-//     return { data: results };
-//   } catch (error) {
-//     return { message: 'Error filtering categories and products.', error: error.message };
-//   }
-// }
-
-
-//add HSN code in filter category and product
-static async filterCategoriesAndProducts({ cat_auto_gen_id, product_name, product_id, category_name, hsn_code }) {
+// //already enter the correct code
+static async filterCategoriesAndProducts({ cat_auto_gen_id, product_name, product_id,category_name }) {
   try {
     let sql = `
       SELECT 
         pc.cat_auto_gen_id,
         pc.category_name,
         pc.description,
-        p.id AS product_id,  
+        p.id AS product_id,           -- Correct column name to 'id' from 'product_id'
         p.product_name,
         p.product_description,
         p.product_price,
@@ -184,7 +114,6 @@ static async filterCategoriesAndProducts({ cat_auto_gen_id, product_name, produc
         p.brand_name,
         p.selling_price,
         p.GST,
-        p.hsn_code,           -- ✅ Added hsn_code
         p.created_at,
         p.updated_at,
         p.deleted_at,
@@ -192,43 +121,33 @@ static async filterCategoriesAndProducts({ cat_auto_gen_id, product_name, produc
       FROM 
         product_category pc
       LEFT JOIN 
-        product_table p ON pc.cat_auto_gen_id = p.product_category  -- ✅ Correct join condition
+        product_table p ON pc.id = p.product_category  -- Corrected the join condition
       WHERE 1=1
     `;
 
     const params = [];
 
-    // ✅ Filter by category ID
+    // Add conditions dynamically
     if (cat_auto_gen_id) {
       sql += ' AND pc.cat_auto_gen_id = ?';
       params.push(cat_auto_gen_id);
     }
 
-    // ✅ Filter by product name (LIKE for partial matches)
     if (product_name) {
       sql += ' AND p.product_name LIKE ?';
       params.push(`%${product_name}%`);
     }
 
-    // ✅ Filter by product ID
     if (product_id) {
-      sql += ' AND p.id = ?';
+      sql += ' AND p.id = ?';    // Correct column name to 'id' from 'product_id'
       params.push(product_id);
     }
-
-    // ✅ Filter by category name (LIKE for partial matches)
-    if (category_name) {
+  if (category_name) {
       sql += ' AND pc.category_name LIKE ?';
       params.push(`%${category_name}%`);
     }
 
-    // ✅ Filter by HSN Code
-    if (hsn_code) {
-      sql += ' AND p.hsn_code = ?';
-      params.push(hsn_code);
-    }
-
-    // ✅ Execute the query
+    // Execute the query
     const results = await queryAsync(sql, params);
 
     if (results.length === 0) {
@@ -244,11 +163,117 @@ static async filterCategoriesAndProducts({ cat_auto_gen_id, product_name, produc
 
 
 
+// //add HSN code in filter category and product
+// static async filterCategoriesAndProducts({ cat_auto_gen_id, product_name, product_id, category_name}) {
+//   try {
+//     let sql = `
+//       SELECT 
+//         pc.cat_auto_gen_id,
+//         pc.category_name,
+//         pc.description,
+//         p.id AS product_id,  
+//         p.product_name,
+//         p.product_description,
+//         p.product_price,
+//         p.product_quantity,
+//         p.stock_status,
+//         p.generic_name,
+//         p.product_batch_no,
+//         p.expiry_date,
+//         p.product_discount,
+//         p.supplier_price,
+//         p.supplier,
+//         p.brand_name,
+//         p.selling_price,
+//         p.GST,        
+//         p.created_at,
+//         p.updated_at,
+//         p.deleted_at,
+//         p.is_deleted
+//       FROM 
+//         product_category pc
+//       LEFT JOIN 
+//         product_table p ON pc.cat_auto_gen_id = p.product_category  -- ✅ Correct join condition
+//       WHERE 1=1
+//     `;
+
+//     const params = [];
+
+//     // ✅ Filter by category ID
+//     if (cat_auto_gen_id) {
+//       sql += ' AND pc.cat_auto_gen_id = ?';
+//       params.push(cat_auto_gen_id);
+//     }
+
+//     // ✅ Filter by product name (LIKE for partial matches)
+//     if (product_name) {
+//       sql += ' AND p.product_name LIKE ?';
+//       params.push(`%${product_name}%`);
+//     }
+
+//     // ✅ Filter by product ID
+//     if (product_id) {
+//       sql += ' AND p.id = ?';
+//       params.push(product_id);
+//     }
+
+//     // ✅ Filter by category name (LIKE for partial matches)
+//     if (category_name) {
+//       sql += ' AND pc.category_name LIKE ?';
+//       params.push(`%${category_name}%`);
+//     }
+
+//     // ✅ Filter by HSN Code
+//     if (hsn_code) {
+//       sql += ' AND p.hsn_code = ?';
+//       params.push(hsn_code);
+//     }
+
+//     // ✅ Execute the query
+//     const results = await queryAsync(sql, params);
+
+//     if (results.length === 0) {
+//       return { message: 'No matching categories or products found.' };
+//     }
+
+//     return { data: results };
+//   } catch (error) {
+//     return { message: 'Error filtering categories and products.', error: error.message };
+//   }
+// }
+
+
+
+
 
   static async getAll() {
     const rows = await queryAsync('SELECT * FROM product_category', []);
     return rows;
   }
+
+  static async getAll_page(page, limit) {
+    const offset = (page - 1) * limit; // Calculate offset
+
+    // Query to fetch paginated categories
+    const rows = await queryAsync(
+        'SELECT * FROM product_category LIMIT ? OFFSET ?', 
+        [limit, offset]
+    );
+
+    // Query to get total count of categories
+    const totalRows = await queryAsync('SELECT COUNT(*) AS total FROM product_category', []);
+    const totalCategories = totalRows[0].total;
+
+    return { categories: rows, totalCategories };
+}
+
+static async getAllCategoryNames() {  
+  const rows = await queryAsync('SELECT category_name FROM product_category', []);
+  return rows.map(row => row.category_name);
+}
+
+
+
 
   static async getById(id) {
     const rows = await queryAsync('SELECT * FROM product_category WHERE id = ?', [id]);

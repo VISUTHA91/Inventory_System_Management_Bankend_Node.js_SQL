@@ -11,7 +11,19 @@ const productExportController = require('../controller/Product_export_controller
 // Routes for Product Operations
 router.post('/inproduct', authMiddleware, adminOnly, productController.createProduct);  // Create product
 
-router.get('/Allpro', authMiddleware, adminOrStaff, productController.getAllProducts);  // Get all products
+//product pagination 
+
+
+router.get('/Allpro_pagination', authMiddleware, adminOrStaff, productController.getAllProducts);  // Get all products
+
+
+//product list only
+
+router.get('/Allpro_list', authMiddleware, adminOrStaff, productController.getAllPro);  // Get all products
+
+
+router.get('/filter_pro', authMiddleware, adminOrStaff, productController.searchProducts);  // Get all products
+
 
 router.get('/proByid/:id', authMiddleware, adminOrStaff, productController.getProductById);  // Get product by ID
 
@@ -54,6 +66,7 @@ const upload = multer({
 // Import route path
 router.post('/import', upload, async (req, res) => {
     const fileBuffer = req.file.buffer;
+    console.log("file",req.file);
     const isZip = req.file.mimetype === 'application/zip';
 
     try {

@@ -110,14 +110,13 @@ class CategoryController {
 
   static async filterCategoriesAndProducts(req, res) {
     try {
-      const { cat_auto_gen_id, product_name, product_id, hsn_code } = req.query;
+      const { cat_auto_gen_id, product_name, product_id } = req.query;
 
       // Pass parameters to the model
       const results = await Category.filterCategoriesAndProducts({
         cat_auto_gen_id,
         product_name,
-        product_id,
-        hsn_code
+        product_id
       });
 
       if (results.length === 0) {
@@ -132,7 +131,7 @@ class CategoryController {
 
 
 
-
+//ishu already correct code 
 
   static async getAllCategories(req, res) {
     try {
@@ -142,6 +141,46 @@ class CategoryController {
       res.status(500).json({ message: 'Error fetching categories.', error: error.message });
     }
   }
+
+
+  static async getAllCategories_pagination(req, res) { 
+    try {
+        const page = parseInt(req.query.page) || 1;  // Default to page 1
+        const limit = parseInt(req.query.limit) || 10; // Default limit 10 per page
+
+        const { categories, totalCategories } = await Category.getAll_page(page, limit);
+
+        res.status(200).json({
+            success: true,
+            message: "Categories fetched successfully",
+            page: page,
+            limit: limit,
+            totalCategories: totalCategories,
+            totalPages: Math.ceil(totalCategories / limit),
+            data: categories
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching categories.', error: error.message });
+    }
+}
+
+static async getAllCategoryNamesHandler(req, res) {  
+  try {
+      const categoryNames = await Category.getAllCategoryNames();
+
+      res.status(200).json({
+          success: true,
+          message: "Category names fetched successfully",
+          data: categoryNames
+      });
+
+  } catch (error) {
+      res.status(500).json({ message: 'Error fetching category names.', error: error.message });
+  }
+}
+
+
 
   static async getCategoryById(req, res) {
     try {

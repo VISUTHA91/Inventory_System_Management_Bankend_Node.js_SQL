@@ -7,8 +7,12 @@ const { authMiddleware, adminOnly,adminOrStaff }  = require("../middleware/auth_
 // Route for creating a supplier
 router.post('/sup_insert', authMiddleware,adminOnly, supplierController.createSupplier);
 
+// Route to get all supplier names
+router.get('/supplier-names', authMiddleware,adminOnly,supplierController.getAllSupplierNames);
+
 // Route for getting all suppliers
-router.get('/sup_all', authMiddleware,adminOnly,supplierController.getAllSuppliers);
+router.get('/sup_all', authMiddleware,adminOrStaff,supplierController.getAllSuppliers);
+
 
 // Route for getting a supplier by ID
 router.get('/sup_id/:id', authMiddleware,adminOnly,supplierController.getSupplierById);
@@ -16,7 +20,12 @@ router.get('/sup_id/:id', authMiddleware,adminOnly,supplierController.getSupplie
 // Route for updating a supplier
 router.put('/sup_update/:id',authMiddleware,adminOnly,supplierController.updateSupplier);
 
+// Route for updating a supplier
+router.put('/sup_update/:id',authMiddleware,adminOnly,supplierController.updateSupplier);
+
 // Route for deleting a supplier
 router.delete('/sup_del/:id',authMiddleware,adminOnly, supplierController.deleteSupplier);
+
+
 
 module.exports = router;

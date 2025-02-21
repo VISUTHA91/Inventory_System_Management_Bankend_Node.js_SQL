@@ -140,23 +140,53 @@ exports.createInvoice = async (req, res) => {
 
 // get all invoices
 
+//my correct code
 
+// exports.getAllInvoices = async (req, res) => {
+//     try {
+//         // Call the model method to fetch invoices
+//         const invoices = await Invoice.getAllInvoices();
+
+//         // Send a successful response with the fetched data
+//         res.status(200).json({
+//             success: true,
+//             message: 'Invoices fetched successfully',
+//             data: invoices,
+//         });
+//     } catch (error) {
+//         console.error('Error fetching invoices:', error);
+
+//         // Send an error response if something goes wrong
+//         res.status(500).json({
+//             success: false,
+//             message: 'Failed to fetch invoices',
+//             error: error.message,
+//         });
+//     }
+// };
 
 exports.getAllInvoices = async (req, res) => {
     try {
-        // Call the model method to fetch invoices
-        const invoices = await Invoice.getAllInvoices();
+        const page = parseInt(req.query.page) || 1; // Default page 1
+        const limit = parseInt(req.query.limit) || 10; // Default limit 10 invoices per page
 
-        // Send a successful response with the fetched data
+        const { invoices, totalInvoices, totalPages } = await Invoice.getAllInvoices(page, limit);
+
+        if (invoices.length === 0) {
+            return res.status(404).json({ success: false, message: 'No invoices found' });
+        }
+
         res.status(200).json({
             success: true,
             message: 'Invoices fetched successfully',
+            total_invoice: totalInvoices,
+            total_page: totalPages,
+            page: page,
+            limit: limit,
             data: invoices,
         });
     } catch (error) {
         console.error('Error fetching invoices:', error);
-
-        // Send an error response if something goes wrong
         res.status(500).json({
             success: false,
             message: 'Failed to fetch invoices',
@@ -164,6 +194,8 @@ exports.getAllInvoices = async (req, res) => {
         });
     }
 };
+
+
 
 //update the invoice
 exports.updateInvoice = async (req, res) => {
@@ -369,49 +401,30 @@ exports.deleteInvoice = async (req, res) => {
 
 
 
-// // Get Income and Expense for a Period (1 day, 1 week, 1 month, 1 year)
 
 
-// exports.getIncomeExpense = async (req, res) => {
-//     try {
-//         const { startDate, endDate } = req.body;
 
-//         // Validate input parameters
-//         if (!startDate || !endDate) {
-//             return res.status(400).json({ message: 'Start date and end date are required' });
-//         }
-
-//         // Fetch the data from the model
-//         const data = await Invoice.getIncomeExpenseData(startDate, endDate);
-
-//         if (!data) {
-//             return res.status(404).json({ message: 'No data found for the given date range' });
-//         }
-
-//         // Return the results as structured data
-//         res.status(200).json({
-//             success: true,
-//             message: `Income and Expense data for the period from ${startDate} to ${endDate}`,
-//             data: {
-//                 sales_income: data.income || 0,
-//                 sales_discount_expense: data.expense || 0,
-//                 supplier_credit: data.supplier_credit || 0,
-//                 supplier_payments: data.supplier_payments || 0,
-//                 supplier_balance: data.supplier_balance || 0, // New field
-//             }
-//         });
-//     } catch (err) {
-//         console.error("Error fetching income and expense data:", err);
-//         res.status(500).json({ message: 'Server error', error: err.message });
-//     }
-// };
 
 
 
 exports.getMostSoldMedicinesController = (req, res) => {
-    Invoice.getMostSoldMedicines()
+    const { period } = req.query; // Get the time period from the query parameters
+    let interval;
+
+    // Set interval based on input
+    if (period === "1week") {
+        interval = "7 DAY";
+    } else if (period === "2week") {
+        interval = "14 DAY";
+    } else if (period === "1month") {
+        interval = "30 DAY";
+    } else {
+        return res.status(400).json({ message: "Invalid period. Use 1week, 2week, or 1month." });
+    }
+
+    Invoice.getMostSoldMedicines(interval)
         .then(response => {
-            return res.status(200).json(response); // Send successful response
+            return res.status(200).json(response);
         })
         .catch(error => {
             console.error(error);
@@ -422,3 +435,69 @@ exports.getMostSoldMedicinesController = (req, res) => {
         });
 };
 
+
+
+
+
+// // Controller Function
+// exports.getMostSoldMedicinesControllerwith = (req, res) => { 
+//     const { period, startDate, endDate } = req.query;
+//     let interval = null;
+
+//     // Set interval based on input
+//     if (period === "1week") {
+//         interval = "7 DAY";
+//     } else if (period === "2week") {
+//         interval = "14 DAY";
+//     } else if (period === "1month") {
+//         interval = "30 DAY";
+//     } else if (period) {
+//         return res.status(400).json({ message: "Invalid period. Use 1week, 2week, or 1month." });
+//     }
+
+//     // Remove time part from startDate & endDate (only keep the date)
+//     const formattedStartDate = startDate ? startDate.split(" ")[0] : null;
+//     const formattedEndDate = endDate ? endDate.split(" ")[0] : null;
+
+//     Invoice.getMostSoldMedicineswithout(formattedStartDate, formattedEndDate, interval)
+//         .then(response => {
+//             return res.status(200).json(response);
+//         })
+//         .catch(error => {
+//             console.error(error);
+//             return res.status(500).json({
+//                 message: "Error fetching most sold medicines",
+//                 error: error.message,
+//             });
+//         });
+// };
+
+
+
+exports.getAllSoldProductsController = (req, res) => { 
+    const { startDate, endDate, period } = req.query;
+    let interval = null;
+
+    // Set interval if provided
+    if (period === "1week") {
+        interval = "7 DAY";
+    } else if (period === "2week") {
+        interval = "14 DAY";
+    } else if (period === "1month") {
+        interval = "30 DAY";
+    } else if (period) {
+        return res.status(400).json({ message: "Invalid period. Use 1week, 2week, or 1month." });
+    }
+
+    Invoice.getAllSoldProductsWithInvoices(startDate, endDate, interval)
+        .then(response => {
+            return res.status(200).json(response);
+        })
+        .catch(error => {
+            console.error(error);
+            return res.status(500).json({
+                message: "Error fetching all sold products",
+                error: error.message,
+            });
+        });
+};

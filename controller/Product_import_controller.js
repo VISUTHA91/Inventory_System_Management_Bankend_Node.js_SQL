@@ -65,6 +65,8 @@ async function importProductsFromExcel(fileBuffer, isZip) {
     const errors = [];
     const errorRows = [];
 
+    
+
     try {
         let finalBuffer = fileBuffer;
 
@@ -106,6 +108,8 @@ async function importProductsFromExcel(fileBuffer, isZip) {
                 row.getCell(13).value
             ));
 
+            const mfd = row.getCell(15).value ? new Date(row.getCell(15).value).toISOString().split('T')[0] : null;
+
             const productData = {
                 product_name: (row.getCell(1).value || '').toString().trim(),
                 product_category: await getCategoryIdByName(String(row.getCell(2).value).trim()),
@@ -121,7 +125,9 @@ async function importProductsFromExcel(fileBuffer, isZip) {
                 brand_name: row.getCell(12).value,
                 selling_price: finalSellingPrice,
                 GST: isNaN(row.getCell(13).value) ? 0 : row.getCell(13).value,
+                // Added Manufacturing Date (MFD)
                 stock_status: Product.determineStockStatus(productQuantity),
+                MFD: mfd
             };
 
             if (productData.product_quantity <= 0 || isNaN(productData.product_quantity)) {

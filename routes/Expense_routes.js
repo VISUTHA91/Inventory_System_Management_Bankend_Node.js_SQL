@@ -8,6 +8,8 @@ router.post('/expensesinsert', expenseController.createExpense);
 // Get all expenses
 router.get('/expensesall', expenseController.getAllExpenses);
 
+router.get('/pagination_expence', expenseController.getAllExpensespage);
+
 // Get a single expense by ID
 router.get('/expenses/:id', expenseController.getExpenseById);
 

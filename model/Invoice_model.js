@@ -129,67 +129,142 @@ class Invoice {
 
 
     //get All invoice
+//my correct code
+    // static getAllInvoices() {
+    //     return new Promise((resolve, reject) => {
+    //         const query = `
+    //                 SELECT i.*, c.customer_name
+    //                 FROM invoice_table i
+    //                 JOIN customer_table c ON i.customer_id = c.customer_id
+    //             `;
 
-    static getAllInvoices() {
+    //         db.query(query, async (err, results) => {
+    //             if (err) return reject(err);
+
+    //             const invoices = await Promise.all(results.map(async (invoice) => {
+    //                 // Parse product IDs and quantities
+    //                 const productIDs = JSON.parse(invoice.product_id || '[]');
+    //                 const quantities = JSON.parse(invoice.quantity || '[]');
+
+    //                 if (!productIDs.length || !quantities.length) {
+    //                     return { ...invoice, products: [], totalGST: "0.00", finalPriceWithGST: invoice.final_price };
+    //                 }
+
+    //                 const productQuery = `
+    //                         SELECT id AS product_id, product_name, selling_price, GST 
+    //                         FROM product_table 
+    //                         WHERE id IN (?)
+    //                     `;
+
+    //                 try {
+    //                     const products = await new Promise((resolve, reject) => {
+    //                         db.query(productQuery, [productIDs], (err, productResults) => {
+    //                             if (err) return reject(err);
+    //                             resolve(productResults);
+    //                         });
+    //                     });
+
+    //                     // Combine product details with quantities
+    //                     const productsWithDetails = products.map((product, index) => {
+    //                         const quantity = quantities[index] || 0;
+    //                         const gstAmount = parseFloat(((product.selling_price * product.GST) / 100).toFixed(2));
+    //                         return {
+    //                             ...product,
+    //                             quantity,
+    //                             gst_amount: gstAmount,
+    //                             selling_price: parseFloat(product.selling_price).toFixed(2),
+    //                         };
+    //                     });
+
+    //                     const totalGST = productsWithDetails.reduce((sum, p) => sum + p.gst_amount, 0).toFixed(2);
+    //                     const finalPriceWithGST = (parseFloat(invoice.final_price) + parseFloat(totalGST)).toFixed(2);
+
+    //                     return { ...invoice, products: productsWithDetails, totalGST, finalPriceWithGST };
+
+    //                 } catch (err) {
+    //                     return reject(err);
+    //                 }
+    //             }));
+
+    //             resolve(invoices);
+    //         });
+    //     });
+    // }
+
+
+    static getAllInvoices(page = 1, limit = 10) {
         return new Promise((resolve, reject) => {
-            const query = `
+            const offset = (page - 1) * limit; // Calculate pagination offset
+    
+            // Query to count total invoices
+            const countQuery = `SELECT COUNT(*) AS total FROM invoice_table`;
+    
+            db.query(countQuery, (err, countResult) => {
+                if (err) return reject(err);
+    
+                const totalInvoices = countResult[0].total;
+                const totalPages = Math.ceil(totalInvoices / limit);
+    
+                // Query to fetch paginated invoices
+                const query = `
                     SELECT i.*, c.customer_name
                     FROM invoice_table i
                     JOIN customer_table c ON i.customer_id = c.customer_id
-                `;
-
-            db.query(query, async (err, results) => {
-                if (err) return reject(err);
-
-                const invoices = await Promise.all(results.map(async (invoice) => {
-                    // Parse product IDs and quantities
-                    const productIDs = JSON.parse(invoice.product_id || '[]');
-                    const quantities = JSON.parse(invoice.quantity || '[]');
-
-                    if (!productIDs.length || !quantities.length) {
-                        return { ...invoice, products: [], totalGST: "0.00", finalPriceWithGST: invoice.final_price };
-                    }
-
-                    const productQuery = `
+                    LIMIT ? OFFSET ?`; // Apply LIMIT and OFFSET
+    
+                db.query(query, [limit, offset], async (err, results) => {
+                    if (err) return reject(err);
+    
+                    const invoices = await Promise.all(results.map(async (invoice) => {
+                        const productIDs = JSON.parse(invoice.product_id || '[]');
+                        const quantities = JSON.parse(invoice.quantity || '[]');
+    
+                        if (!productIDs.length || !quantities.length) {
+                            return { ...invoice, products: [], totalGST: "0.00", finalPriceWithGST: invoice.final_price };
+                        }
+    
+                        const productQuery = `
                             SELECT id AS product_id, product_name, selling_price, GST 
                             FROM product_table 
                             WHERE id IN (?)
                         `;
-
-                    try {
-                        const products = await new Promise((resolve, reject) => {
-                            db.query(productQuery, [productIDs], (err, productResults) => {
-                                if (err) return reject(err);
-                                resolve(productResults);
+    
+                        try {
+                            const products = await new Promise((resolve, reject) => {
+                                db.query(productQuery, [productIDs], (err, productResults) => {
+                                    if (err) return reject(err);
+                                    resolve(productResults);
+                                });
                             });
-                        });
-
-                        // Combine product details with quantities
-                        const productsWithDetails = products.map((product, index) => {
-                            const quantity = quantities[index] || 0;
-                            const gstAmount = parseFloat(((product.selling_price * product.GST) / 100).toFixed(2));
-                            return {
-                                ...product,
-                                quantity,
-                                gst_amount: gstAmount,
-                                selling_price: parseFloat(product.selling_price).toFixed(2),
-                            };
-                        });
-
-                        const totalGST = productsWithDetails.reduce((sum, p) => sum + p.gst_amount, 0).toFixed(2);
-                        const finalPriceWithGST = (parseFloat(invoice.final_price) + parseFloat(totalGST)).toFixed(2);
-
-                        return { ...invoice, products: productsWithDetails, totalGST, finalPriceWithGST };
-
-                    } catch (err) {
-                        return reject(err);
-                    }
-                }));
-
-                resolve(invoices);
+    
+                            const productsWithDetails = products.map((product, index) => {
+                                const quantity = quantities[index] || 0;
+                                const gstAmount = parseFloat(((product.selling_price * product.GST) / 100).toFixed(2));
+                                return {
+                                    ...product,
+                                    quantity,
+                                    gst_amount: gstAmount,
+                                    selling_price: parseFloat(product.selling_price).toFixed(2),
+                                };
+                            });
+    
+                            const totalGST = productsWithDetails.reduce((sum, p) => sum + p.gst_amount, 0).toFixed(2);
+                            const finalPriceWithGST = (parseFloat(invoice.final_price) + parseFloat(totalGST)).toFixed(2);
+    
+                            return { ...invoice, products: productsWithDetails, totalGST, finalPriceWithGST };
+    
+                        } catch (err) {
+                            return reject(err);
+                        }
+                    }));
+    
+                    resolve({ invoices, totalInvoices, totalPages });
+                });
             });
         });
     }
+    
+    
 
 
     static async updateInvoice(invoiceId, data) {
@@ -389,105 +464,217 @@ class Invoice {
 
 
 
-    static getMostSoldMedicines = (req, res) => {
+    
+ 
+
+
+  
+
+
+    static getMostSoldMedicines(interval) {
         return new Promise((resolve, reject) => {
-            // Adjust the query to match your database schema and logic
             const query = `
             SELECT 
-    p.product_name,
-    SUM(JSON_VALUE(i.quantity, CONCAT('$[', idx.idx, ']'))) AS total_quantity_sold,
-    ROUND(
-        (
-            SUM(JSON_VALUE(i.quantity, CONCAT('$[', idx.idx, ']'))) /
-            (
-                SELECT SUM(JSON_VALUE(i.quantity, CONCAT('$[', idx.idx, ']')))
-                FROM invoice_table i
-                CROSS JOIN (
-                    SELECT 0 AS idx UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3
-                ) idx
-                WHERE i.invoice_created_at >= NOW() - INTERVAL 30 DAY
-            )
-        ) * 100, 
-        2
-    ) AS percentage_of_total_sales
-FROM 
-    invoice_table i
-CROSS JOIN (
-    SELECT 0 AS idx UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3
-) idx
-JOIN 
-    product_table p
-    ON JSON_VALUE(i.product_id, CONCAT('$[', idx.idx, ']')) = p.id
-WHERE 
-    i.invoice_created_at >= NOW() - INTERVAL 30 DAY
-GROUP BY 
-    p.product_name
-ORDER BY 
-    total_quantity_sold DESC;
+                p.product_name,
+                SUM(JSON_VALUE(i.quantity, CONCAT('$[', idx.idx, ']'))) AS total_quantity_sold,
+                ROUND(
+                    (
+                        SUM(JSON_VALUE(i.quantity, CONCAT('$[', idx.idx, ']'))) /
+                        (
+                            SELECT SUM(JSON_VALUE(i.quantity, CONCAT('$[', idx.idx, ']')))
+                            FROM invoice_table i
+                            CROSS JOIN (
+                                SELECT 0 AS idx UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3
+                            ) idx
+                            WHERE i.invoice_created_at >= NOW() - INTERVAL ${interval}
+                        )
+                    ) * 100, 
+                    2
+                ) AS percentage_of_total_sales
+            FROM 
+                invoice_table i
+            CROSS JOIN (
+                SELECT 0 AS idx UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3
+            ) idx
+            JOIN 
+                product_table p
+                ON JSON_VALUE(i.product_id, CONCAT('$[', idx.idx, ']')) = p.id
+            WHERE 
+                i.invoice_created_at >= NOW() - INTERVAL ${interval}
+            GROUP BY 
+                p.product_name
+            ORDER BY 
+                total_quantity_sold DESC;
+            `;
 
-
-
-`;
-    
-            // Run the query to fetch most sold medicines in the last 30 days
             db.query(query, (err, results) => {
-                console.log("Most sold medicines query results:", results); 
+                console.log("Most sold medicines query results:", results);
                 if (err) {
-                    console.error('Database error during fetching most sold medicines:', err);
-                    return reject(err); // Reject with error if query fails
+                    console.error("Database error during fetching most sold medicines:", err);
+                    return reject(err);
                 }
-    
+
                 if (results.length === 0) {
                     resolve({
-                        message: "No sales data found in the last 30 days",
+                        message: `No sales data found in the last ${interval}`,
                         data: [],
                     });
                 } else {
                     resolve({
-                        message: "Most sold medicines in the last 30 days",
+                        message: `Most sold medicines in the last ${interval}`,
                         data: results,
                     });
                 }
             });
         });
-    };
-    
-    
-    
-    
+    }
+
+
     
 
 
+    // Controller Function
 
-    // static calculateIncome(startDate, endDate) {
+
+   
+    
+    // Model Function
+    // static getMostSoldMedicineswithout(startDate, endDate, interval) {
     //     return new Promise((resolve, reject) => {
-    //         const queryIncome = `SELECT SUM(final_price) AS totalIncome FROM invoice_table WHERE invoice_created_at BETWEEN ? AND ?`;
-
+    //         let whereClause = "WHERE i.payment_status = 'Paid'"; // Consider only paid invoices
+    
+    //         // Add date range filter (ensuring only DATE is used)
+    //         if (startDate && endDate) {
+    //             whereClause += ` AND DATE(i.invoice_created_at) BETWEEN '${startDate}' AND '${endDate}'`;
+    //         }
+    //         // Add interval filter if provided
+    //         else if (interval) {
+    //             whereClause += ` AND DATE(i.invoice_created_at) >= DATE(NOW() - INTERVAL ${interval})`;
+    //         }
+    
     //         const query = `
-    //                       SELECT
-    //                       SUM(paid_amount) AS total_paid_to_supplier,
-    //                       SUM(purchased_amount) AS total_purchased_from_supplier
-    //                       FROM
-    //                       supplier
-    //                       WHERE
-    //                       created_at BETWEEN ? AND ?;
-    //                     `;
-
-
-    //         db.query(queryIncome, [startDate, endDate], (err, incomeResults) => {
-    //             if (err) return reject(err);
-
-    //             resolve({
-    //                 totalIncome: incomeResults[0].totalIncome || 0,
-
-    //             });
+    //             SELECT 
+    //                 p.product_name,
+    //                 SUM(JSON_VALUE(i.quantity, CONCAT('$[', idx.idx, ']'))) AS total_quantity_sold,
+    //                 ROUND(
+    //                     (
+    //                         SUM(JSON_VALUE(i.quantity, CONCAT('$[', idx.idx, ']'))) / 
+    //                         (SELECT SUM(JSON_VALUE(i.quantity, CONCAT('$[', idx.idx, ']')))
+    //                          FROM invoice_table i
+    //                          CROSS JOIN (SELECT 0 AS idx UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3) idx
+    //                          ${whereClause})
+    //                     ) * 100, 
+    //                     2
+    //                 ) AS percentage_of_total_sales
+    //             FROM 
+    //                 invoice_table i
+    //             CROSS JOIN (
+    //                 SELECT 0 AS idx UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3
+    //             ) idx
+    //             JOIN 
+    //                 product_table p
+    //                 ON JSON_VALUE(i.product_id, CONCAT('$[', idx.idx, ']')) = p.id
+    //             ${whereClause}
+    //             GROUP BY 
+    //                 p.product_name
+    //             ORDER BY 
+    //                 total_quantity_sold DESC;
+    //         `;
+    
+    //         db.query(query, (err, results) => {
+    //             console.log("Most sold medicines query results:", results);
+    //             if (err) {
+    //                 console.error("Database error during fetching most sold medicines:", err);
+    //                 return reject(err);
+    //             }
+    
+    //             if (results.length === 0) {
+    //                 resolve({
+    //                     message: `No sales data found for the given filters`,
+    //                     data: [],
+    //                 });
+    //             } else {
+    //                 resolve({
+    //                     message: `Most sold medicines for the given filters`,
+    //                     data: results,
+    //                 });
+    //             }
     //         });
     //     });
-
     // }
-
-
     
+    
+   
+
+    static getAllSoldProductsWithInvoices(startDate, endDate, interval) {
+        return new Promise((resolve, reject) => {
+            let whereClause = "WHERE i.payment_status = 'Paid'"; // Consider only paid invoices
+            let params = []; // Store parameters for query execution
+    
+            // Add date range filter (ensuring only DATE is used)
+            if (startDate && endDate) {
+                whereClause += ` AND DATE(i.invoice_created_at) BETWEEN ? AND ?`;
+                params.push(startDate, endDate); // Bind parameters
+            }
+            // Add interval filter if provided
+            else if (interval) {
+                whereClause += ` AND DATE(i.invoice_created_at) >= DATE(NOW() - INTERVAL ? DAY)`;
+                params.push(interval);
+            }
+    
+            const query = `
+                SELECT 
+                    i.id AS invoice_id, 
+                    i.invoice_number,
+                    i.customer_id,
+                    i.invoice_created_at,
+                    JSON_VALUE(i.product_id, CONCAT('$[', idx.idx, ']')) AS product_id,
+                    JSON_VALUE(i.quantity, CONCAT('$[', idx.idx, ']')) AS quantity_sold,
+                    JSON_VALUE(i.total_price, CONCAT('$[', idx.idx, ']')) AS total_price,
+                    JSON_VALUE(i.discount, CONCAT('$[', idx.idx, ']')) AS discount,
+                    JSON_VALUE(i.final_price, CONCAT('$[', idx.idx, ']')) AS final_price,
+                    i.payment_status,
+                    p.product_name
+                FROM 
+                    invoice_table i
+                CROSS JOIN (
+                    SELECT 0 AS idx UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3
+                ) idx
+                JOIN 
+                    product_table p
+                    ON JSON_VALUE(i.product_id, CONCAT('$[', idx.idx, ']')) = p.id
+                ${whereClause}
+                ORDER BY 
+                    i.invoice_created_at DESC, i.id;
+            `;
+    
+            db.query(query, params, (err, results) => {
+                console.log("All sold products query results:", results);
+                if (err) {
+                    console.error("Database error during fetching all sold products:", err);
+                    return reject(err);
+                }
+    
+                if (results.length === 0) {
+                    resolve({
+                        message: `No sales data found for the given filters`,
+                        data: [],
+                    });
+                } else {
+                    resolve({
+                        message: `All sold products with invoice details for the given filters`,
+                        data: results,
+                    });
+                }
+            });
+        });
+    }
+    
+
+
+
+
+
 }
 
 

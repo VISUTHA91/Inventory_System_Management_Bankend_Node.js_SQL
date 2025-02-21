@@ -9,7 +9,7 @@ router.post('/insert', shopController.createShop);
 router.get('getbyid/:shopId', shopController.getShopById);
 
 // Get all shops
-router.get('getAll/', shopController.getAllShops);
+router.get('/getAll', shopController.getAllShops);
 
 // Update a shop
 router.put('update/:shopId', shopController.updateShop);

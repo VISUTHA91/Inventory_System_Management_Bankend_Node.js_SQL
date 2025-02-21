@@ -99,10 +99,24 @@ class Customer {
     }
 
     // Get all customers
-    static async getAll() {
-        const customers = await Customer.query('SELECT * FROM customer_table');
-        return customers;
+    // static async getAll() {
+    //     const customers = await Customer.query('SELECT * FROM customer_table');
+    //     return customers;
+    // }
+
+    static async getAll(page = 1, limit = 10) {
+        const offset = (page - 1) * limit; // Calculate offset for pagination
+        const query = `SELECT * FROM customer_table LIMIT ? OFFSET ?`; // Use LIMIT and OFFSET
+    
+        try {
+            const customers = await Customer.query(query, [limit, offset]);
+            return customers;
+        } catch (err) {
+            console.error('Database error:', err);
+            throw new Error('Error fetching customers from the database');
+        }
     }
+    
 
     // Get customer by ID
     static async getById(id) {

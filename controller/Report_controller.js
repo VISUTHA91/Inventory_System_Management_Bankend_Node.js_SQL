@@ -95,16 +95,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
 // controllers/salesController.js
 const salesModel = require('../model/Report_model.js');
 

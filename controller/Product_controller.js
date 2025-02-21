@@ -5,9 +5,9 @@ const db = require("../config/Database");
 
 class ProductController {
 
-
-static getAllProducts(req, res) {
-    Product.fetchAll()
+//list only products without pagination
+static getAllPro(req, res) {
+    Product.fetchAllpro()
         .then(products => {
             // Handle the case where no products are found
             if (products.length === 0) {
@@ -30,8 +30,45 @@ static getAllProducts(req, res) {
 }
 
 
-
+//pagination products
     // Get product by ID
+   
+    static getAllProducts(req, res) {
+        const page = parseInt(req.query.page) || 1; // Default to page 1
+        const limit = parseInt(req.query.limit) || 10; // Default limit to 10
+    
+        Product.fetchAll(page, limit)
+            .then(({ products, totalProducts }) => {
+                if (products.length === 0) {
+                    return res.status(404).json({ message: 'No products found' });
+                }
+    
+                // Calculate total pages
+                const totalPages = Math.ceil(totalProducts / limit);
+    
+                // Respond with paginated products, total count, and total pages
+                res.status(200).json({
+                    message: 'Products fetched successfully',
+                    page: page,
+                    limit: limit,
+                    totalProducts: totalProducts,
+                    totalPages: totalPages,
+                    data: products
+                });
+            })
+            .catch(err => {
+                console.error('Error fetching products:', err);
+                res.status(500).json({
+                    message: 'Error fetching products',
+                    error: err.message
+                });
+            });
+    }
+    
+     
+   
+   
+   
     static async getProductById(req, res) {
         try {
             // Fetch the product by ID
@@ -60,7 +97,7 @@ static async createProduct(req, res) {
 
     console.log("product data", req.body);
 
-    if (!productData.product_name || !productData.product_price || !productData.product_quantity || !productData.hsn_code) {
+    if (!productData.product_name || !productData.product_price || !productData.product_quantity ) {
         return res.status(400).json({ message: 'Missing required fields.' });
     }
 
@@ -222,54 +259,80 @@ static async updateProduct(req, res) {
     }
 
 
-
-
-
-
-    // Permanently delete a product that has been soft-deleted
+   
     static async permanentDeleteProduct(req, res) {
         try {
             const productId = req.params.id;
 
-            // First, check if the product exists and has been soft-deleted
-            const product = await Product.findById(productId); // Corrected from fetchById to findById
-            if (!product) {
-                return res.status(404).json({ message: 'Product not found' });
-            }
+            // First, check if the product exists and is soft-deleted (is_deleted = 1)
+            const product = await Product.findSoftDeletedById(productId);
 
-            if (product.is_deleted === 0) {
-                return res.status(400).json({ message: 'Product has not been soft-deleted' });
+            if (!product) {
+                return res.status(404).json({ message: 'Product not found or not soft-deleted' });
             }
 
             // Permanently delete the product
             const result = await Product.moveToPermanentDelete(productId);
 
             if (result.affectedRows === 0) {
-                return res.status(404).json({ message: 'Product not found' });
+                return res.status(404).json({ message: 'Product not found or already permanently deleted' });
             }
 
+            // Send success response
             res.status(200).json({ message: 'Product permanently deleted' });
         } catch (err) {
+            console.error(err);  // Log error for debugging
             res.status(500).json({ message: 'Error permanently deleting product', error: err.message });
         }
     }
+    
 
-    // List all soft-deleted products
-    static async getSoftDeletedProducts(req, res) {
+    // // List all soft-deleted products
+    // static async getSoftDeletedProducts(req, res) {
+    //     try {
+    //         const products = await Product.getSoftDeletedProducts();
+    //         if (products.length === 0) {
+    //             return res.status(404).json({ message: 'No soft-deleted products found' });
+    //         }
+    //         res.status(200).json({
+    //             message: 'Soft-deleted products fetched successfully',
+    //             data: products
+    //         });
+    //     } catch (err) {
+    //         res.status(500).json({ message: 'Error fetching soft-deleted products', error: err.message });
+    //     }
+    // }
+
+      // List all soft-deleted products with pagination
+      
+      static async getSoftDeletedProducts(req, res) {
         try {
-            const products = await Product.getSoftDeletedProducts();
+            let page = parseInt(req.query.page) || 1; // Default page = 1
+            let limit = parseInt(req.query.limit) || 5; // Default limit = 5
+            let offset = (page - 1) * limit;
+
+            // Fetch products
+            const products = await Product.getSoftDeletedProducts(limit, offset);
+            // Fetch total count
+            const total = await Product.getSoftDeletedProductsCount();
+
             if (products.length === 0) {
                 return res.status(404).json({ message: 'No soft-deleted products found' });
             }
+
             res.status(200).json({
                 message: 'Soft-deleted products fetched successfully',
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit),
                 data: products
             });
+
         } catch (err) {
             res.status(500).json({ message: 'Error fetching soft-deleted products', error: err.message });
         }
     }
-
 
 
 
@@ -293,6 +356,34 @@ static async updateProduct(req, res) {
             res.status(500).json({ message: 'Error restoring product', error: err.message });
         }
     }
+
+
+    static searchProducts(req, res) {
+        const { search } = req.query;
+    
+        if (!search || search.trim() === "") {
+            return res.status(400).json({ message: "Search term is required." });
+        }
+    
+        Product.fetchFilteredProducts(search)
+            .then(products => {
+                if (products.length === 0) {
+                    return res.status(404).json({ message: "No matching products found." });
+                }
+                res.status(200).json({
+                    message: "Products fetched successfully",
+                    data: products
+                });
+            })
+            .catch(err => {
+                console.error("Error fetching filtered products:", err);
+                res.status(500).json({
+                    message: "Error fetching filtered products",
+                    error: err.message
+                });
+            });
+    }
+    
 
 
 

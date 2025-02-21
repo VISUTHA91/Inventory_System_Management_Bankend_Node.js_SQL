@@ -8,7 +8,7 @@ const connection = mysql.createPool({
   host: "localhost",
   user: "root",
   password: "",
-  database: "inventory_system",
+  database: "inventory_system",  
   waitForConnections: true,
   connectionLimit: 100, // Increased connection limit (adjust this as needed)
   queueLimit: 0
