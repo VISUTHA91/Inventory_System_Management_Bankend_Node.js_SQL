@@ -18,7 +18,7 @@ exports.generateInvoiceNumber = async (req, res) => {
 exports.createInvoice = async (req, res) => {
     try {
         const { customer_id, products, payment_status} = req.body;
-        console.log('Products:', products);
+        console.log('Products:', req.body);
 
         // Validate customer existence
         const customerExists = await Invoice.checkCustomerExists(customer_id);
