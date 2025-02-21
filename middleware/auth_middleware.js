@@ -6,7 +6,7 @@ const rateLimit = require('express-rate-limit');
 const authMiddleware = (req, res, next) => {
   let token = req.headers["authorization"] ? req.headers["authorization"] : "";
 
-  if (!token) {
+  if (!token) { 
     return res
       .status(401)
       .json({ status: false, message: "Token not provided" });
