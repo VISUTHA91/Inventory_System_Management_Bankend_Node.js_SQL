@@ -35,12 +35,29 @@ class Invoice {
     }
 
 
-    static async checkCustomerExists(customerId) {
-        // Use 'customer_id' in the query, not 'id'
-        const query = 'SELECT customer_id FROM customer_table WHERE customer_id = ?';
-        const [results] = await db.promise().query(query, [customerId]);
-        return results.length > 0; // returns true if the customer exists
-    };
+    // static async checkCustomerExists(customerId) {
+    //     // Use 'customer_id' in the query, not 'id'
+    //     const query = 'SELECT customer_id FROM customer_table WHERE customer_id = ?';
+    //     const [results] = await db.promise().query(query, [phone]);
+    //     return results.length > 0; // returns true if the customer exists
+    // };
+    static async checkCustomerExists(phone) {
+        try {
+            const [rows] = await db.promise().query(
+                "SELECT customer_id FROM customer_table WHERE phone = ? ORDER BY customer_id DESC LIMIT 1",
+                [phone]
+            );
+            console.log("Customer Exists Query Result:", rows);
+            return rows.length > 0 ? rows[0] : null;
+        } catch (error) {
+            console.error("Error in checkCustomerExists:", error);
+            return null;
+        }
+    }
+    
+    
+    
+    
 
 
     // Check if product exists and fetch details

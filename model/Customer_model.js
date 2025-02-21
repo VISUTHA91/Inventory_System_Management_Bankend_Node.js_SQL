@@ -65,38 +65,77 @@ class Customer {
         });
     }
 
-    // Create a customer
-    static async create(data) {
-        const {
-            customer_name,
-            phone,
-            email,
-            address,
-            purchased_item,
-            purchased_quantity,
-            amount,
-            status,
-            customer_gst_number,
-        } = data;
 
+      // Find a customer by phone
+      static async findByPhone(phone, customer_name) {
         const result = await Customer.query(
-            `INSERT INTO customer_table 
-            (customer_name, phone, email, address, purchased_item, purchased_quantity, amount, status, customer_gst_number) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-                customer_name,
-                phone,
-                email,
-                address,
-                purchased_item,
-                purchased_quantity,
-                amount,
-                status,
-                customer_gst_number,
-            ]
+            `SELECT * FROM customer_table WHERE phone = ? OR customer_name = ? LIMIT 1`, 
+            [phone]
         );
-        return result.insertId; // Return the newly created customer ID
+        return result.length ? result[0] : null; // Return customer if found, else null
     }
+
+
+    // // Create a customer
+    // static async create(data) {
+    //     const {
+    //         customer_name,
+    //         phone,
+    //         email,
+    //         address,
+    //         purchased_item,
+    //         purchased_quantity,
+    //         amount,
+    //         status,
+    //         customer_gst_number,
+    //     } = data;
+
+    //     const result = await Customer.query(
+    //         `INSERT INTO customer_table 
+    //         (customer_name, phone, email, address, purchased_item, purchased_quantity, amount, status, customer_gst_number) 
+    //         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    //         [
+    //             customer_name,
+    //             phone,
+    //             email,
+    //             address,
+    //             purchased_item,
+    //             purchased_quantity,
+    //             amount,
+    //             status,
+    //             customer_gst_number,
+    //         ]
+    //     );
+    //     return result.insertId; // Return the newly created customer ID
+    // }
+
+
+    static async checkCustomerExists(phone) {
+        try {
+            const [rows] = await db.promise().query(
+                "SELECT customer_id FROM customer_table WHERE phone = ? LIMIT 1",
+                [phone]
+            );
+            return rows.length > 0 ? rows[0] : null;
+        } catch (error) {
+            console.error("Error in checkCustomerExists:", error);
+            return null;
+        }
+    }
+
+    static async create({ customer_name, phone }) {
+        try {
+            const [result] = await db.promise().query(
+                "INSERT INTO customer_table (customer_name, phone) VALUES (?, ?)",
+                [customer_name, phone]
+            );
+            return result.insertId;
+        } catch (error) {
+            console.error("Error creating customer:", error);
+            throw error;
+        }
+    }
+    
 
     // Get all customers
     // static async getAll() {
