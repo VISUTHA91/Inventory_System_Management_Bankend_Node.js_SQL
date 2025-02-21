@@ -95,16 +95,7 @@ class Supplier {
             throw new Error('Supplier GST number is required');
         }
 
-        // // Validate debit and balance
-        // if (debit < 0) {
-        //     throw new Error('Debit cannot be a negative value');
-        // }
-
-        // const calculatedBalance = parseFloat(credit) - parseFloat(debit);
-        // if (calculatedBalance < 0) {
-        //     throw new Error('Balance cannot be negative');
-        // }
-
+        
         await Supplier.query(
             `UPDATE supplier 
              SET company_name = ?, phone_number = ?, email = ?, supplier_gst_number = ?, address = ?, city = ?, 
