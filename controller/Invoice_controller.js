@@ -1,4 +1,6 @@
 const Invoice = require('../model/Invoice_model');
+const Customer = require('../model/Customer_model');
+const db = require('../config/Database'); 
 
 
 // Generate Invoice Number
@@ -14,29 +16,151 @@ exports.generateInvoiceNumber = async (req, res) => {
 
 // //insert invoice details
 
+// // my correct code of invoice
+// exports.createInvoice = async (req, res) => {
+//     try {
+//         const { customer_id, products, payment_status} = req.body;
+//         console.log('Products:', products);
+
+//         // Validate customer existence
+//         const customerExists = await Invoice.checkCustomerExists(customer_id);
+//         if (!customerExists) {
+//             return res.status(404).json({ message: 'Customer not found' });
+//         }
+
+//         // Initialize totals and product details array
+//         let totalPrice = 0;
+//         let totalGST = 0;
+//         let totalDiscount = 0;
+//         const detailedProducts = []; // To store detailed product information
+
+//         // Validate products and calculate totals
+//         for (const item of products) {
+//             const productDetails = await Invoice.checkProductExists(item.product_id);
+//             console.log("Product Details:", productDetails);
+
+//             if (!productDetails) {
+//                 return res.status(404).json({ message: `Product with ID ${item.product_id} not found` });
+//             }
+//             if (productDetails.product_quantity < item.quantity) {
+//                 return res.status(400).json({
+//                     message: `Insufficient stock for product with ID ${item.product_id}`,
+//                 });
+//             }
+
+//             // Calculate the price, GST, and discount for this product
+//             const unitPrice = parseFloat(productDetails.product_price);
+//             const subtotal = unitPrice * item.quantity;
+
+//             // Calculate GST and Discount for this product
+//             const gstAmount = parseFloat(((subtotal * productDetails.GST) / 100).toFixed(2));
+//             const discountAmount = parseFloat(((subtotal * productDetails.product_discount) / 100).toFixed(2));
+
+//             // Update totals
+//             totalPrice += subtotal;
+//             totalGST += gstAmount;
+//             totalDiscount += discountAmount;
+
+//             // Add to detailed products list
+//             detailedProducts.push({
+//                 product_id: item.product_id,
+//                 product_name: productDetails.product_name,
+//                 unit_price: unitPrice.toFixed(2),
+//                 quantity: item.quantity,
+//                 subtotal: subtotal.toFixed(2),
+//                 discount: discountAmount.toFixed(2),
+//                 gst: gstAmount.toFixed(2),
+//                 final_price: (subtotal + gstAmount - discountAmount).toFixed(2),
+//             });
+//         }
+
+//         // Calculate the final price for the invoice
+//         const finalPrice = parseFloat((totalPrice + totalGST - totalDiscount).toFixed(2));
+
+//         // Check for calculation errors
+//         if (isNaN(finalPrice) || isNaN(totalPrice) || isNaN(totalGST) || isNaN(totalDiscount)) {
+//             return res.status(400).json({ message: 'Error in calculating prices' });
+//         }
+
+//         // Generate an invoice number
+//         const invoiceNumber = await Invoice.generateInvoiceNumber();
+
+//         try {
+//             // Update stock for all products
+//             for (const item of products) {
+//                 await Invoice.updateStock(item.product_id, item.quantity);
+//             }
+
+//             // Prepare invoice data for saving
+//             const invoiceData = {
+//                 invoice_number: invoiceNumber,
+//                 customer_id,
+//                 product_id: products.map((p) => p.product_id),
+//                 quantity: products.map((p) => p.quantity),
+//                 discount: totalDiscount.toFixed(2),
+//                 total_price: totalPrice.toFixed(2),
+//                 final_price: finalPrice.toFixed(2),
+//                 payment_status
+//             };
+
+//             // Create the invoice in the database
+//             const invoice = await Invoice.createInvoice(invoiceData);
+
+//             // Send the response with the invoice details
+//             res.status(201).json({
+//                 message: 'Invoice created successfully',
+//                 invoice_details: {
+//                     invoice_id: invoice.invoice_id,
+//                     invoice_number: invoice.invoice_number,
+//                     customer_id: invoice.customer_id,
+//                     payment_status: invoice.payment_status,
+                 
+//                     products: detailedProducts,
+//                     summary: {
+//                         total_price: totalPrice.toFixed(2),
+//                         total_discount: totalDiscount.toFixed(2),
+//                         total_gst: totalGST.toFixed(2),
+//                         final_price: finalPrice.toFixed(2),
+//                     },
+//                 },
+//             });
+//         } catch (error) {
+//             console.error('Error creating invoice:', error);
+//             res.status(500).json({ message: 'Internal Server Error' });
+//         }
+//     } catch (error) {
+//         console.error('Error creating invoice:', error);
+//         res.status(500).json({ message: 'Internal Server Error' });
+//     }
+// };
+
+
 
 exports.createInvoice = async (req, res) => {
     try {
-        const { customer_id, products, payment_status} = req.body;
+        const { customer_name, phone, products, payment_status } = req.body;
         console.log('Products:', products);
 
-        // Validate customer existence
-        const customerExists = await Invoice.checkCustomerExists(customer_id);
-        if (!customerExists) {
-            return res.status(404).json({ message: 'Customer not found' });
+        let customer_id;
+
+        // Check if the customer exists
+        const existingCustomer = await Customer.checkCustomerExists(phone);
+        if (existingCustomer) {
+            customer_id = existingCustomer.customer_id; // Fetch customer ID if exists
+        } else {
+            // Create a new customer if not found
+            customer_id = await Customer.create({ customer_name, phone });
+            console.log("New customer created with ID:", customer_id);
         }
 
-        // Initialize totals and product details array
         let totalPrice = 0;
         let totalGST = 0;
         let totalDiscount = 0;
-        const detailedProducts = []; // To store detailed product information
+        const detailedProducts = [];
 
         // Validate products and calculate totals
         for (const item of products) {
             const productDetails = await Invoice.checkProductExists(item.product_id);
-            console.log("Product Details:", productDetails);
-
             if (!productDetails) {
                 return res.status(404).json({ message: `Product with ID ${item.product_id} not found` });
             }
@@ -46,20 +170,15 @@ exports.createInvoice = async (req, res) => {
                 });
             }
 
-            // Calculate the price, GST, and discount for this product
             const unitPrice = parseFloat(productDetails.product_price);
             const subtotal = unitPrice * item.quantity;
-
-            // Calculate GST and Discount for this product
             const gstAmount = parseFloat(((subtotal * productDetails.GST) / 100).toFixed(2));
             const discountAmount = parseFloat(((subtotal * productDetails.product_discount) / 100).toFixed(2));
 
-            // Update totals
             totalPrice += subtotal;
             totalGST += gstAmount;
             totalDiscount += discountAmount;
 
-            // Add to detailed products list
             detailedProducts.push({
                 product_id: item.product_id,
                 product_name: productDetails.product_name,
@@ -72,24 +191,19 @@ exports.createInvoice = async (req, res) => {
             });
         }
 
-        // Calculate the final price for the invoice
         const finalPrice = parseFloat((totalPrice + totalGST - totalDiscount).toFixed(2));
 
-        // Check for calculation errors
         if (isNaN(finalPrice) || isNaN(totalPrice) || isNaN(totalGST) || isNaN(totalDiscount)) {
             return res.status(400).json({ message: 'Error in calculating prices' });
         }
 
-        // Generate an invoice number
         const invoiceNumber = await Invoice.generateInvoiceNumber();
 
         try {
-            // Update stock for all products
             for (const item of products) {
                 await Invoice.updateStock(item.product_id, item.quantity);
             }
 
-            // Prepare invoice data for saving
             const invoiceData = {
                 invoice_number: invoiceNumber,
                 customer_id,
@@ -101,10 +215,8 @@ exports.createInvoice = async (req, res) => {
                 payment_status
             };
 
-            // Create the invoice in the database
             const invoice = await Invoice.createInvoice(invoiceData);
 
-            // Send the response with the invoice details
             res.status(201).json({
                 message: 'Invoice created successfully',
                 invoice_details: {
@@ -112,7 +224,6 @@ exports.createInvoice = async (req, res) => {
                     invoice_number: invoice.invoice_number,
                     customer_id: invoice.customer_id,
                     payment_status: invoice.payment_status,
-                 
                     products: detailedProducts,
                     summary: {
                         total_price: totalPrice.toFixed(2),
@@ -138,9 +249,14 @@ exports.createInvoice = async (req, res) => {
 
 
 
+
+
+
+
+
 // get all invoices
 
-//my correct code
+// my correct code
 
 // exports.getAllInvoices = async (req, res) => {
 //     try {
