@@ -177,6 +177,8 @@ class Customer {
             customer_gst_number,
         } = data;
 
+        //details
+
         await Customer.query(
             `UPDATE customer_table 
             SET customer_name = ?, phone = ?, email = ?, address = ?, purchased_item = ?, purchased_quantity = ?, 

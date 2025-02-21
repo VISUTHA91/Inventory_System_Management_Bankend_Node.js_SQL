@@ -138,7 +138,10 @@ exports.generateInvoiceNumber = async (req, res) => {
 
 exports.createInvoice = async (req, res) => {
     try {
-        const { customer_name, products, payment_status} = req.body;
+
+        const { customer_name, phone, products, payment_status } = req.body;
+
+        console.log(req.body);
         console.log('Products:', products);
 
         let customer_id;
