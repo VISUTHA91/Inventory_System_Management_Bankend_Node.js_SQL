@@ -147,6 +147,37 @@ const createInvoice = async (req, res) => {
     }
 };
 
+
+
+
+// Get invoices by supplier ID
+const get_supplier_Invoices = async (req, res) => {
+  try {
+    const supplierId = req.params.supplierId;
+    const invoices = await supplierModel.getInvoicesBySupplier(supplierId);
+
+    if (invoices.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No invoices found for this supplier",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: invoices,
+    });
+  } catch (error) {
+    console.error("Error fetching invoices:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
+
+
 // Insert a payment
 const addPayment = async (req, res) => {
     const { invoiceId, paymentAmount, paymentDate } = req.body;
@@ -187,4 +218,6 @@ module.exports = {
     addPayment,
     listInvoicesWithPayments,
     getInvoice,
+    get_supplier_Invoices
+    
 };

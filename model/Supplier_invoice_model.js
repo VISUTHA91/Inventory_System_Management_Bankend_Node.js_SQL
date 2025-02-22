@@ -247,6 +247,36 @@ const insertInvoice = (supplierId, supplierBillNo, description, totalAmount, inv
     ]);
 };
 
+
+// Get all invoices for a supplier
+const getInvoicesBySupplier = async (supplierId) => {
+  try {
+    const query = `
+      SELECT 
+          si.invoice_id, 
+          si.supplier_id, 
+          s.company_name,
+          si.supplier_bill_no, 
+          si.description, 
+          si.bill_amount, 
+          si.balance_bill_amount, 
+          si.invoice_bill_date, 
+          si.due_date, 
+          si.status, 
+          si.created_at,
+          (si.bill_amount - si.balance_bill_amount) AS total_paid
+      FROM supplier_invoices si
+      JOIN supplier s ON si.supplier_id = s.supplier_id
+      WHERE si.supplier_id = ?`;
+
+    const [rows] = await db.promise().query(query, [supplierId]);
+    return rows;
+  } catch (error) {
+    console.error("Error fetching supplier invoices:", error);
+    throw error;
+  }
+};
+
 // Insert a payment
 
 
@@ -398,4 +428,6 @@ module.exports = {
     insertPayment,
     getInvoicesWithPayments,
     getInvoiceDetails,
+    getInvoicesBySupplier
+    
 };

@@ -7,6 +7,8 @@ const { authMiddleware, adminOnly, adminOrStaff } = require("../middleware/auth_
 router.post('/invoicesin', authMiddleware,adminOrStaff,invoiceController.createInvoice);
 
 // Get All Invoices
+router.get('/invoiceall_pagination', authMiddleware,adminOrStaff,invoiceController.getAllInvoicespage);
+// Get All Invoices
 router.get('/invoiceall', authMiddleware,adminOrStaff,invoiceController.getAllInvoices);
 
 // Get Invoice by Invoice Number
@@ -24,11 +26,16 @@ router.put('/invoiceup/:id', authMiddleware,adminOnly,invoiceController.updateIn
 router.delete('/invoicedel/:id', authMiddleware,adminOnly,invoiceController.deleteInvoice);
 
 // Route to get most sold medicines in the last 1w,2w,30 days
-router.get('/most_sold_medicines',authMiddleware,adminOrStaff,invoiceController.getMostSoldMedicinesController);
+router.get('/most_sold_medicines',invoiceController.getMostSoldMedicinesController);
 
-// router.get('/most_sold',invoiceController.getMostSoldMedicinesControllerwith);
+// router.get('/most_sold',invoiceController.getMostSoldMedicinesControllerwith);(search)
 router.get('/most_sold_details',authMiddleware,adminOrStaff,invoiceController.getAllSoldProductsController);
+router.get('/pagination_sales',authMiddleware,adminOrStaff,invoiceController.getAllSoldProductsControllerpage);
 
+// 🔹 Invoice List (JSON, CSV, PDF)
+router.get("/report_Gen", invoiceController.getInvoiceListController);
+// 🔹 Total Sales Summary (JSON)
+router.get("/total-sales", invoiceController.getTotalSalesController);
 
 
 

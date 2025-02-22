@@ -14,9 +14,11 @@ exports.generateInvoiceNumber = async (req, res) => {
     }
 };
 
+//************my old correct invoice generate only
+
 // //insert invoice details
 
-// // my correct code of invoice
+// // ********my correct code of invoice
 // exports.createInvoice = async (req, res) => {
 //     try {
 //         const { customer_id, products, payment_status} = req.body;
@@ -134,7 +136,112 @@ exports.generateInvoiceNumber = async (req, res) => {
 //     }
 // };
 
+//****************visutha provide code
 
+// exports.createInvoice = async (req, res) => {
+//     try {
+//         // Fix: Map invoiceDetails to products
+//         const { customer_name, phone, invoiceDetails, payment_status } = req.body;
+//         const products = invoiceDetails;
+
+//         console.log("Received Body:", req.body);
+//         console.log("Products:", products);
+
+//         if (!Array.isArray(products) || products.length === 0) {
+//             return res.status(400).json({ message: 'Invalid or missing product data' });
+//         }
+
+//         let customer_id;
+//         const existingCustomer = await Customer.checkCustomerExists(phone);
+//         if (existingCustomer) {
+//             customer_id = existingCustomer.customer_id;
+//         } else {
+//             customer_id = await Customer.create({ customer_name, phone });
+//             console.log("New customer created with ID:", customer_id);
+//         }
+
+//         let totalPrice = 0;
+//         let totalGST = 0;
+//         let totalDiscount = 0;
+//         const detailedProducts = [];
+
+//         for (const item of products) {
+//             const productDetails = await Invoice.checkProductExists(item.id); // Fix: Match product ID field
+//             if (!productDetails) {
+//                 return res.status(404).json({ message: `Product with ID ${item.id} not found `});
+//             }
+//             if (productDetails.product_quantity < item.product_quantity) {
+//                 return res.status(400).json({ message: `Insufficient stock for product with ID ${item.id} `});
+//             }
+
+//             const unitPrice = parseFloat(item.sellingPrice);
+//             const subtotal = unitPrice * item.product_quantity;
+//             const gstAmount = parseFloat(((subtotal * parseFloat(item.gst)) / 100).toFixed(2));
+//             const discountAmount = 0; // You might need to handle discounts properly
+
+//             totalPrice += subtotal;
+//             totalGST += gstAmount;
+//             totalDiscount += discountAmount;
+
+//             detailedProducts.push({
+//                 product_id: item.id,
+//                 product_name: item.product_name,
+//                 unit_price: unitPrice.toFixed(2),
+//                 quantity: item.product_quantity,
+//                 subtotal: subtotal.toFixed(2),
+//                 discount: discountAmount.toFixed(2),
+//                 gst: gstAmount.toFixed(2),
+//                 final_price: (subtotal + gstAmount - discountAmount).toFixed(2),
+//             });
+//         }
+//         const finalPrice = parseFloat((totalPrice + totalGST - totalDiscount).toFixed(2));
+
+//         if (isNaN(finalPrice) || isNaN(totalPrice) || isNaN(totalGST) || isNaN(totalDiscount)) {
+//             return res.status(400).json({ message: 'Error in calculating prices' });
+//         }
+//         const invoiceNumber = await Invoice.generateInvoiceNumber();
+//         try {
+//             for (const item of products) {
+//                 await Invoice.updateStock(item.id, item.product_quantity);
+//             }
+//             const invoiceData = {
+//                 invoice_number: invoiceNumber,
+//                 customer_id,
+//                 product_id: products.map((p) => p.id),
+//                 quantity: products.map((p) => p.product_quantity),
+//                 discount: totalDiscount.toFixed(2),
+//                 total_price: totalPrice.toFixed(2),
+//                 final_price: finalPrice.toFixed(2),
+//                 payment_status
+//             };
+//             const invoice = await Invoice.createInvoice(invoiceData);
+//             res.status(201).json({
+//                 message: 'Invoice created successfully',
+//                 invoice_details: {
+//                     invoice_id: invoice.invoice_id,
+//                     invoice_number: invoice.invoice_number,
+//                     customer_id: invoice.customer_id,
+//                     payment_status: invoice.payment_status,
+//                     products: detailedProducts,
+//                     summary: {
+//                         total_price: totalPrice.toFixed(2),
+//                         total_discount: totalDiscount.toFixed(2),
+//                         total_gst: totalGST.toFixed(2),
+//                         final_price: finalPrice.toFixed(2),
+//                     },
+//                 },
+//             });
+//         } catch (error) {
+//             console.error('Error creating invoice:', error);
+//             res.status(500).json({ message: 'Internal Server Error' });
+//         }
+//     } catch (error) {
+//         console.error('Error creating invoice:', error);
+//         res.status(500).json({ message: 'Internal Server Error' });
+//     }
+// };
+
+//****************auto generate customer with invoice
 
 exports.createInvoice = async (req, res) => {
     try {
@@ -257,39 +364,39 @@ exports.createInvoice = async (req, res) => {
 
 
 
-// get all invoices
+//get all invoices
 
-// my correct code
-
-// exports.getAllInvoices = async (req, res) => {
-//     try {
-//         // Call the model method to fetch invoices
-//         const invoices = await Invoice.getAllInvoices();
-
-//         // Send a successful response with the fetched data
-//         res.status(200).json({
-//             success: true,
-//             message: 'Invoices fetched successfully',
-//             data: invoices,
-//         });
-//     } catch (error) {
-//         console.error('Error fetching invoices:', error);
-
-//         // Send an error response if something goes wrong
-//         res.status(500).json({
-//             success: false,
-//             message: 'Failed to fetch invoices',
-//             error: error.message,
-//         });
-//     }
-// };
+//my correct code
 
 exports.getAllInvoices = async (req, res) => {
+    try {
+        // Call the model method to fetch invoices
+        const invoices = await Invoice.getAllInvoices();
+
+        // Send a successful response with the fetched data
+        res.status(200).json({
+            success: true,
+            message: 'Invoices fetched successfully',
+            data: invoices,
+        });
+    } catch (error) {
+        console.error('Error fetching invoices:', error);
+
+        // Send an error response if something goes wrong
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch invoices',
+            error: error.message,
+        });
+    }
+};
+
+exports.getAllInvoicespage = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1; // Default page 1
         const limit = parseInt(req.query.limit) || 10; // Default limit 10 invoices per page
 
-        const { invoices, totalInvoices, totalPages } = await Invoice.getAllInvoices(page, limit);
+        const { invoices, totalInvoices, totalPages } = await Invoice.getAllInvoicespage(page, limit);
 
         if (invoices.length === 0) {
             return res.status(404).json({ success: false, message: 'No invoices found' });
@@ -522,6 +629,50 @@ exports.deleteInvoice = async (req, res) => {
 
 
 
+const { generateCSV, generatePDF } = require("../Helper/export_helper");
+
+exports.getInvoiceListController = async (req, res) => {
+    try {
+        const { startDate, endDate, period, productName, categoryName, format } = req.query;
+        let interval = null;
+
+        if (period === "1week") interval = 7;
+        else if (period === "2week") interval = 14;
+        else if (period === "1month") interval = 30;
+        else if (period) return res.status(400).json({ message: "Invalid period. Use 1week, 2week, or 1month." });
+
+        const response = await Invoice.getInvoiceList(startDate, endDate, interval, productName, categoryName);
+
+        if (!response || response.length === 0) {
+            return res.status(404).json({ message: "No invoices found" });
+        }
+
+        // Return JSON if no format is specified
+        if (!format) return res.status(200).json(response);
+
+        // Handle CSV Export
+        if (format === "csv") return await generateCSV(response, res, "invoice_report.csv");
+
+        // Handle PDF Export
+        if (format === "pdf") return await generatePDF(response, res, "invoice_report.pdf");
+
+        return res.status(400).json({ message: "Invalid format. Use csv or pdf." });
+    } catch (error) {
+        console.error("Error in invoice controller:", error);
+        res.status(500).json({ message: "Error fetching invoice data", error: error.message });
+    }
+};
+
+// 🔹 Total Sales Controller
+exports.getTotalSalesController = async (req, res) => {
+    try {
+        const totalSales = await Invoice.getTotalSales();
+        res.status(200).json(totalSales);
+    } catch (error) {
+        console.error("Error fetching total sales:", error);
+        res.status(500).json({ message: "Error fetching total sales", error: error.message });
+    }
+};
 
 
 
@@ -555,15 +706,75 @@ exports.getMostSoldMedicinesController = (req, res) => {
 };
 
 
+//now correctly work and without pagition
+exports.getAllSoldProductsController = (req, res) => {
+    const { startDate, endDate, period, productName, categoryName } = req.query;
+    let interval = null;
+
+    // Set interval if provided
+    if (period === "1week") {
+        interval = "7";
+    } else if (period === "2week") {
+        interval = "14";
+    } else if (period === "1month") {
+        interval = "30";
+    } else if (period) {
+        return res.status(400).json({ message: "Invalid period. Use 1week, 2week, or 1month." });
+    }
+
+    Invoice.getAllSoldProductsWithInvoices(startDate, endDate, interval, productName, categoryName)
+        .then(response => res.status(200).json(response))
+        .catch(error => {
+            console.error(error);
+            return res.status(500).json({
+                message: "Error fetching all sold products",
+                error: error.message,
+            });
+        });
+};
+
+//pagination code
+exports.getAllSoldProductsControllerpage = (req, res) => {
+    const { startDate, endDate, period, productName, categoryName, page = 1, limit = 10 } = req.query;
+    let interval = null;
+
+    // Convert page & limit to integers
+    const pageNumber = parseInt(page) || 1;
+    const limitNumber = parseInt(limit) || 10;
+    const offset = (pageNumber - 1) * limitNumber;
+
+    // Validate period
+    if (period === "1week") {
+        interval = "7";
+    } else if (period === "2week") {
+        interval = "14";
+    } else if (period === "1month") {
+        interval = "30";
+    } else if (period) {
+        return res.status(400).json({ message: "Invalid period. Use 1week, 2week, or 1month." });
+    }
+
+    Invoice.getAllSoldProductsWithInvoicespage(startDate, endDate, interval, productName, categoryName, limitNumber, offset)
+        .then(response => res.status(200).json(response))
+        .catch(error => {
+            console.error(error);
+            return res.status(500).json({
+                message: "Error fetching sold products",
+                error: error.message,
+            });
+        });
+};
 
 
 
-// // Controller Function
-// exports.getMostSoldMedicinesControllerwith = (req, res) => { 
-//     const { period, startDate, endDate } = req.query;
+
+//correct code of below
+
+// exports.getAllSoldProductsController = (req, res) => { 
+//     const { startDate, endDate, period } = req.query;
 //     let interval = null;
 
-//     // Set interval based on input
+//     // Set interval if provided
 //     if (period === "1week") {
 //         interval = "7 DAY";
 //     } else if (period === "2week") {
@@ -574,49 +785,15 @@ exports.getMostSoldMedicinesController = (req, res) => {
 //         return res.status(400).json({ message: "Invalid period. Use 1week, 2week, or 1month." });
 //     }
 
-//     // Remove time part from startDate & endDate (only keep the date)
-//     const formattedStartDate = startDate ? startDate.split(" ")[0] : null;
-//     const formattedEndDate = endDate ? endDate.split(" ")[0] : null;
-
-//     Invoice.getMostSoldMedicineswithout(formattedStartDate, formattedEndDate, interval)
+//     Invoice.getAllSoldProductsWithInvoices(startDate, endDate, interval)
 //         .then(response => {
 //             return res.status(200).json(response);
 //         })
 //         .catch(error => {
 //             console.error(error);
 //             return res.status(500).json({
-//                 message: "Error fetching most sold medicines",
+//                 message: "Error fetching all sold products",
 //                 error: error.message,
 //             });
 //         });
 // };
-
-
-
-exports.getAllSoldProductsController = (req, res) => { 
-    const { startDate, endDate, period } = req.query;
-    let interval = null;
-
-    // Set interval if provided
-    if (period === "1week") {
-        interval = "7 DAY";
-    } else if (period === "2week") {
-        interval = "14 DAY";
-    } else if (period === "1month") {
-        interval = "30 DAY";
-    } else if (period) {
-        return res.status(400).json({ message: "Invalid period. Use 1week, 2week, or 1month." });
-    }
-
-    Invoice.getAllSoldProductsWithInvoices(startDate, endDate, interval)
-        .then(response => {
-            return res.status(200).json(response);
-        })
-        .catch(error => {
-            console.error(error);
-            return res.status(500).json({
-                message: "Error fetching all sold products",
-                error: error.message,
-            });
-        });
-};

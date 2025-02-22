@@ -24,5 +24,6 @@ router.post('/invoices', supplierController.createInvoice);
 router.post('/payments', supplierController.addPayment);
 router.get('/invoices', supplierController.listInvoicesWithPayments);
 router.get('/invoices/:invoiceId', supplierController.getInvoice);
+router.get("/:supplierId/invoices", supplierController.get_supplier_Invoices );
 
 module.exports = router;
