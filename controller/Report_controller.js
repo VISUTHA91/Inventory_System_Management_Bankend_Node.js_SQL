@@ -96,7 +96,7 @@
 
 
 // controllers/salesController.js
-const salesModel = require('../model/Report_model.js');
+
 
 //my correct code 1st
 
@@ -124,28 +124,33 @@ const salesModel = require('../model/Report_model.js');
 //       res.status(500).json({ message: 'Error fetching daily sales report.', error: error.message });
 //     }
 //   };
+
   
+const salesModel = require('../model/Report_model.js');
 
 
 const getDailySales = async (req, res) => {
-    const { startDate, endDate } = req.query;
-    
-    if (!startDate || !endDate) {
-      return res.status(400).json({ message: 'Please provide startDate and endDate.' });
-    }
+  const { startDate, endDate } = req.query;
   
-    try {
-      // Call the model with adjusted endDate to include the full 24 hours
-      const report = await salesModel.getDailyS
-      ales(startDate, endDate);
+  if (!startDate || !endDate) {
+      return res.status(400).json({ message: 'Please provide startDate and endDate.' });
+  }
+
+  try {
+      // Call the model with the correct function name
+      const report = await salesModel.getDailySales(startDate, endDate);
+      
       if (report.length === 0) {
-        return res.status(404).json({ message: 'No sales data found for the given date range.' });
+          return res.status(404).json({ message: 'No sales data found for the given date range.' });
       }
+
       res.status(200).json({ report });
-    } catch (error) {
+  } catch (error) {
+      console.error('Error fetching daily sales report:', error);
       res.status(500).json({ message: 'Error fetching daily sales report.', error: error.message });
-    }
-  };
+  }
+};
+
   
 
 

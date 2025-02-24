@@ -47,27 +47,46 @@ static getAllProducts_stock_search(req, res) {
         });
 }
 
-
-static getsupplier_cat_pro = async (req, res) => {
-    console.log("Route hit with supplierId:", req.params); // Debugging
+static getSupplierCategories = async (req, res) => {
+    console.log("Fetching categories for supplierId:", req.params.supplier_id); // Debugging
 
     try {
-        const supplierId = req.params.supplier_id; // Ensure this matches the route
+        const supplierId = req.params.supplier_id;
         if (!supplierId) {
             return res.status(400).json({ success: false, message: "Supplier ID is required" });
         }
 
-        const products = await Product.fetchBySupplier_pro_cat(supplierId);
-        if (products.length === 0) {
-            return res.status(404).json({ success: false, message: "No products found for this supplier" });
+        const categories = await Product.fetchCategoriesBySupplier(supplierId);
+        if (categories.length === 0) {
+            return res.status(404).json({ success: false, message: "No categories found for this supplier" });
         }
 
-        res.status(200).json({ success: true, data: products });
+        res.status(200).json({ success: true, data: categories });
     } catch (error) {
-        console.error("Error fetching products:", error);
+        console.error("Error fetching categories:", error);
         res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
+// static getsupplier_cat_pro = async (req, res) => {
+//     console.log("Route hit with supplierId:", req.params); // Debugging
+
+//     try {
+//         const supplierId = req.params.supplier_id; // Ensure this matches the route
+//         if (!supplierId) {
+//             return res.status(400).json({ success: false, message: "Supplier ID is required" });
+//         }
+
+//         const products = await Product.fetchBySupplier_pro_cat(supplierId);
+//         if (products.length === 0) {
+//             return res.status(404).json({ success: false, message: "No products found for this supplier" });
+//         }
+
+//         res.status(200).json({ success: true, data: products });
+//     } catch (error) {
+//         console.error("Error fetching products:", error);
+//         res.status(500).json({ success: false, message: "Internal Server Error" });
+//     }
+// };
 
 
     
