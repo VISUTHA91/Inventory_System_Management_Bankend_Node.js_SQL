@@ -21,6 +21,8 @@ router.get('/Allpro_pagination', authMiddleware, adminOrStaff, productController
 
 router.get('/Allpro_list', authMiddleware, adminOrStaff, productController.getAllPro);  // Get all products
 
+router.get('/stock_list_product', authMiddleware, adminOrStaff, productController.getAllProducts_stock_search);
+
 
 router.get('/filter_pro', authMiddleware, adminOrStaff, productController.searchProducts);  // Get all products
 

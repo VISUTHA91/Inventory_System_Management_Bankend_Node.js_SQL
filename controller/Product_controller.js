@@ -5,6 +5,51 @@ const db = require("../config/Database");
 
 class ProductController {
 
+
+//stock report and filtering products
+static getAllProducts_stock_search(req, res) {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const status = req.query.status || null;
+    const search = req.query.search || null;
+    const startDate = req.query.start_date || null;
+    const endDate = req.query.end_date || null;
+    const batchNo = req.query.batch_no || null;
+
+    // Fetch products with all filters
+    Product.stockfetchAllpro(status, search, startDate, endDate, batchNo)
+        .then(products => {
+            if (products.length === 0) {
+                return res.status(404).json({ message: 'No products found' });
+            }
+
+            // Apply pagination
+            const totalProducts = products.length;
+            const totalPages = Math.ceil(totalProducts / limit);
+            const startIndex = (page - 1) * limit;
+            const paginatedProducts = products.slice(startIndex, startIndex + limit);
+
+            res.status(200).json({
+                message: 'Products fetched successfully',
+                page: page,
+                limit: limit,
+                totalProducts: totalProducts,
+                totalPages: totalPages,
+                data: paginatedProducts
+            });
+        })
+        .catch(err => {
+            console.error('Error fetching products:', err);
+            res.status(500).json({
+                message: 'Error fetching products',
+                error: err.message
+            });
+        });
+}
+
+
+    
+
 //list only products without pagination
 static getAllPro(req, res) {
     Product.fetchAllpro()
@@ -64,6 +109,8 @@ static getAllPro(req, res) {
                 });
             });
     }
+
+
     
      
    

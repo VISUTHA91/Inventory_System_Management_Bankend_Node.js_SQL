@@ -147,6 +147,49 @@ const createInvoice = async (req, res) => {
     }
 };
 
+const getAllSuppliersInvoices_page = async (req, res) => {
+  try {
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const search = req.query.search || null;
+      const status = req.query.status || null;
+      const startDate = req.query.startDate || null;
+      const endDate = req.query.endDate || null;
+
+      const { invoices, totalRecords } = await supplierModel.getAllSuppliersWithInvoices(
+          page,
+          limit,
+          search,
+          status,
+          startDate,
+          endDate
+      );
+
+      if (invoices.length === 0) {
+          return res.status(404).json({
+              success: false,
+              message: "No invoices found for any suppliers",
+          });
+      }
+
+      res.status(200).json({
+          success: true,
+          message: "Invoices fetched successfully",
+          page,
+          limit,
+          totalRecords,
+          totalPages: Math.ceil(totalRecords / limit),
+          data: invoices,
+      });
+  } catch (error) {
+      console.error("Error fetching invoices:", error);
+      res.status(500).json({
+          success: false,
+          message: "Internal Server Error",
+      });
+  }
+};
+
 
 
 
@@ -218,6 +261,7 @@ module.exports = {
     addPayment,
     listInvoicesWithPayments,
     getInvoice,
-    get_supplier_Invoices
+    get_supplier_Invoices,
+    getAllSuppliersInvoices_page
     
 };

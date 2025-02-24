@@ -22,7 +22,8 @@ const supplierController = require('../controller/Supplier_invoice_controller');
 
 router.post('/invoices', supplierController.createInvoice);
 router.post('/payments', supplierController.addPayment);
-router.get('/invoices', supplierController.listInvoicesWithPayments);
+router.get('/sup_invoice_list', supplierController.listInvoicesWithPayments);
+router.get('/sup_purchase_list', supplierController.getAllSuppliersInvoices_page);
 router.get('/invoices/:invoiceId', supplierController.getInvoice);
 router.get("/:supplierId/invoices", supplierController.get_supplier_Invoices );
 

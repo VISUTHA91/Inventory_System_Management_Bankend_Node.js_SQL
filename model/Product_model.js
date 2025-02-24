@@ -3,8 +3,94 @@ const db = require("../config/Database");
 // models/productModel.js
 class Product {
 
+//stock for fillter option in product page
+static stockfetchAllpro(status = null, search = null, startDate = null, endDate = null, batchNo = null) {
+    return new Promise((resolve, reject) => {
+        let query = `
+        SELECT 
+            p.id,
+            p.product_name,
+            c.category_name AS product_category,
+            p.product_quantity,
+            p.product_price,
+            p.product_description,
+            p.generic_name,                
+            p.product_batch_no,
+            p.expiry_date,
+            p.product_discount,
+            p.supplier_price,
+            s.company_name AS supplier,
+            p.brand_name,
+            p.selling_price,
+            p.GST,
+            p.stock_status,
+            p.MFD,
+            p.created_at,
+            p.updated_at,
+            p.deleted_at,
+            p.is_deleted
+        FROM 
+            product_table p
+        JOIN 
+            product_category c ON p.product_category = c.id
+        JOIN 
+            supplier s ON p.supplier = s.supplier_id
+        WHERE 
+            p.is_deleted = 0
+        `;
 
-   
+        const queryParams = [];
+
+        // Apply status filter if provided
+        if (status) {
+            query += ` AND p.stock_status = ? `;
+            queryParams.push(status);
+        }
+
+        // Apply search filter if provided (for name, category, expiry date, supplier, and batch number)
+        if (search) {
+            query += ` AND (
+                p.product_name LIKE ? 
+                OR c.category_name LIKE ? 
+                OR p.expiry_date LIKE ? 
+                OR s.company_name LIKE ?
+                OR p.product_batch_no LIKE ?
+            )`;
+            const searchPattern = `%${search}%`;
+            queryParams.push(searchPattern, searchPattern, searchPattern, searchPattern, searchPattern);
+        }
+
+        // Apply expiry date range filter if provided
+        if (startDate && endDate) {
+            query += ` AND p.expiry_date BETWEEN ? AND ? `;
+            queryParams.push(startDate, endDate);
+        }
+
+        // Apply batch number filter if provided
+        if (batchNo) {
+            query += ` AND p.product_batch_no = ? `;
+            queryParams.push(batchNo);
+        }
+
+        query += ` ORDER BY p.expiry_date ASC`;
+
+        db.query(query, queryParams, (err, result) => {
+            if (err) {
+                console.error('Database error:', err);
+                return reject(new Error('Error fetching products from the database'));
+            }
+
+            if (!result || result.length === 0) {
+                return resolve([]);
+            }
+
+            resolve(result);
+        });
+    });
+}
+
+
+    
 
     static fetchAllpro() {
         return new Promise((resolve, reject) => {

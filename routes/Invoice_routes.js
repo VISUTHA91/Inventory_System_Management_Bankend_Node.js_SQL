@@ -27,6 +27,7 @@ router.delete('/invoicedel/:id', authMiddleware,adminOnly,invoiceController.dele
 
 // Route to get most sold medicines in the last 1w,2w,30 days
 router.get('/most_sold_medicines',invoiceController.getMostSoldMedicinesController);
+router.get('/lest_sold_medicines',invoiceController.getLeastSoldMedicinesController);
 
 // router.get('/most_sold',invoiceController.getMostSoldMedicinesControllerwith);(search)
 router.get('/most_sold_details',authMiddleware,adminOrStaff,invoiceController.getAllSoldProductsController);

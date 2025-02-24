@@ -229,6 +229,69 @@
 
 const db = require('../config/Database');
 
+//purchase with supplier product details pagination code
+
+// Get all invoices for a supplier with pagination and filters
+const getAllSuppliersWithInvoices = async (page = 1, limit = 10, search = null, status = null, startDate = null, endDate = null) => {
+    try {
+        let query = `
+            SELECT 
+                si.invoice_id, 
+                si.supplier_id, 
+                s.company_name,
+                si.supplier_bill_no, 
+                si.description, 
+                si.bill_amount, 
+                si.balance_bill_amount, 
+                si.invoice_bill_date, 
+                si.due_date, 
+                si.status, 
+                si.created_at,
+                (si.bill_amount - si.balance_bill_amount) AS total_paid
+            FROM supplier_invoices si
+            JOIN supplier s ON si.supplier_id = s.supplier_id
+            WHERE 1=1
+        `;
+
+        const queryParams = [];
+
+        // Apply search filters
+        if (search) {
+            query += ` AND (s.company_name LIKE ? OR si.supplier_bill_no LIKE ?)`;
+            queryParams.push(`%${search}%`, `%${search}%`);
+        }
+
+        // Apply status filter
+        if (status) {
+            query += ` AND si.status = ?`;
+            queryParams.push(status);
+        }
+
+        // Apply date range filter
+        if (startDate && endDate) {
+            query += ` AND si.invoice_bill_date BETWEEN ? AND ?`;
+            queryParams.push(startDate, endDate);
+        }
+
+        // Count total records for pagination
+        const countQuery = `SELECT COUNT(*) AS total FROM (${query}) AS countTable`;
+        const [[countResult]] = await db.promise().query(countQuery, queryParams);
+        const totalRecords = countResult.total;
+
+        // Apply pagination
+        query += ` ORDER BY si.invoice_bill_date DESC LIMIT ? OFFSET ?`;
+        queryParams.push(limit, (page - 1) * limit);
+
+        // Execute query
+        const [rows] = await db.promise().query(query, queryParams);
+        return { invoices: rows, totalRecords };
+    } catch (error) {
+        console.error("Error fetching supplier invoices:", error);
+        throw error;
+    }
+};
+
+
 // Insert a new invoice
 const insertInvoice = (supplierId, supplierBillNo, description, totalAmount, invoiceDate, dueDate) => {
     const query = `
@@ -428,6 +491,7 @@ module.exports = {
     insertPayment,
     getInvoicesWithPayments,
     getInvoiceDetails,
-    getInvoicesBySupplier
+    getInvoicesBySupplier,
+    getAllSuppliersWithInvoices
     
 };

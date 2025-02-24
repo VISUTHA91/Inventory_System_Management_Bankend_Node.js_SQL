@@ -663,7 +663,10 @@ exports.getInvoiceListController = async (req, res) => {
     }
 };
 
-// 🔹 Total Sales Controller
+
+
+
+//🔹 Total Sales Controller
 exports.getTotalSalesController = async (req, res) => {
     try {
         const totalSales = await Invoice.getTotalSales();
@@ -765,6 +768,35 @@ exports.getAllSoldProductsControllerpage = (req, res) => {
         });
 };
 
+//underforming least slaes products
+
+exports.getLeastSoldMedicinesController = (req, res) => {
+    const { period } = req.query; 
+    let interval;
+
+    // Set interval based on input
+    if (period === "1week") {
+        interval = "7 DAY";
+    } else if (period === "2week") {
+        interval = "14 DAY";
+    } else if (period === "1month") {
+        interval = "30 DAY";
+    } else {
+        return res.status(400).json({ message: "Invalid period. Use 1week, 2week, or 1month." });
+    }
+
+    Invoice.getLeastSoldMedicines(interval)
+        .then(response => {
+            return res.status(200).json(response);
+        })
+        .catch(error => {
+            console.error(error);
+            return res.status(500).json({
+                message: "Error fetching least sold medicines",
+                error: error.message,
+            });
+        });
+};
 
 
 

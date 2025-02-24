@@ -760,73 +760,67 @@ static getMostSoldMedicines(interval) {
         });
     }
     
-
+//under performance product
     
-    //correct code is below
+    static getLeastSoldMedicines(interval) {
+        return new Promise((resolve, reject) => {
+            const query = `
+            SELECT 
+                p.product_name,
+                p.product_price,
+                COALESCE(SUM(JSON_VALUE(i.quantity, CONCAT('$[', idx.idx, ']'))), 0) AS total_quantity_sold,
+                ROUND(
+                    (
+                        COALESCE(SUM(JSON_VALUE(i.quantity, CONCAT('$[', idx.idx, ']'))), 0) / 
+                        (
+                            SELECT COALESCE(SUM(JSON_VALUE(i.quantity, CONCAT('$[', idx.idx, ']'))), 1)
+                            FROM invoice_table i
+                            CROSS JOIN (
+                                SELECT 0 AS idx UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3
+                            ) idx
+                            WHERE i.invoice_created_at >= NOW() - INTERVAL ${interval}
+                        )
+                    ) * 100, 
+                    2
+                ) AS percentage_of_total_sales,
+                (COALESCE(SUM(JSON_VALUE(i.quantity, CONCAT('$[', idx.idx, ']'))), 0) * p.product_price) AS total_sales_amount
+            FROM 
+                product_table p
+            LEFT JOIN 
+                invoice_table i 
+            ON JSON_VALUE(i.product_id, CONCAT('$[', idx.idx, ']')) = p.id
+            LEFT JOIN (
+                SELECT 0 AS idx UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3
+            ) idx ON 1=1
+            WHERE 
+                i.invoice_created_at >= NOW() - INTERVAL ${interval} OR i.invoice_created_at IS NULL
+            GROUP BY 
+                p.product_name, p.product_price
+            ORDER BY 
+                total_quantity_sold ASC;
+            `;
     
-    // static getAllSoldProductsWithInvoices(startDate, endDate, interval) {
-    //     return new Promise((resolve, reject) => {
-    //         let whereClause = "WHERE i.payment_status = 'Paid'"; // Consider only paid invoices
-    //         let params = []; // Store parameters for query execution
+            db.query(query, (err, results) => {
+                console.log("Least sold medicines query results:", results);
+                if (err) {
+                    console.error("Database error during fetching least sold medicines:", err);
+                    return reject(err);
+                }
     
-    //         // Add date range filter (ensuring only DATE is used)
-    //         if (startDate && endDate) {
-    //             whereClause += ` AND DATE(i.invoice_created_at) BETWEEN ? AND ?`;
-    //             params.push(startDate, endDate); // Bind parameters
-    //         }
-    //         // Add interval filter if provided
-    //         else if (interval) {
-    //             whereClause += ` AND DATE(i.invoice_created_at) >= DATE(NOW() - INTERVAL ? DAY)`;
-    //             params.push(interval);
-    //         }
-    
-    //         const query = `
-    //             SELECT 
-    //                 i.id AS invoice_id, 
-    //                 i.invoice_number,
-    //                 i.customer_id,
-    //                 i.invoice_created_at,
-    //                 JSON_VALUE(i.product_id, CONCAT('$[', idx.idx, ']')) AS product_id,
-    //                 JSON_VALUE(i.quantity, CONCAT('$[', idx.idx, ']')) AS quantity_sold,
-    //                 JSON_VALUE(i.total_price, CONCAT('$[', idx.idx, ']')) AS total_price,
-    //                 JSON_VALUE(i.discount, CONCAT('$[', idx.idx, ']')) AS discount,
-    //                 JSON_VALUE(i.final_price, CONCAT('$[', idx.idx, ']')) AS final_price,
-    //                 i.payment_status,
-    //                 p.product_name
-    //             FROM 
-    //                 invoice_table i
-    //             CROSS JOIN (
-    //                 SELECT 0 AS idx UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3
-    //             ) idx
-    //             JOIN 
-    //                 product_table p
-    //                 ON JSON_VALUE(i.product_id, CONCAT('$[', idx.idx, ']')) = p.id
-    //             ${whereClause}
-    //             ORDER BY 
-    //                 i.invoice_created_at DESC, i.id;
-    //         `;
-    
-    //         db.query(query, params, (err, results) => {
-    //             console.log("All sold products query results:", results);
-    //             if (err) {
-    //                 console.error("Database error during fetching all sold products:", err);
-    //                 return reject(err);
-    //             }
-    
-    //             if (results.length === 0) {
-    //                 resolve({
-    //                     message: `No sales data found for the given filters`,
-    //                     data: [],
-    //                 });
-    //             } else {
-    //                 resolve({
-    //                     message: `All sold products with invoice details for the given filters`,
-    //                     data: results,
-    //                 });
-    //             }
-    //         });
-    //     });
-    // }
+                if (results.length === 0) {
+                    resolve({
+                        message: `No sales data found in the last ${interval}`,
+                        data: [],
+                    });
+                } else {
+                    resolve({
+                        message: `Least sold medicines in the last ${interval}`,
+                        data: results,
+                    });
+                }
+            });
+        });
+    }
     
 
 

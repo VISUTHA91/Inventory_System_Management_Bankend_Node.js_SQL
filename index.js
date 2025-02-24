@@ -91,7 +91,7 @@ const expenseRoutes = require("./routes/Expense_routes");
 const reportRoutes = require('./routes/Report_routes');
 const supplierInvoiceRoutes = require('./routes/Supplier_invoice_routes'); // Correct naming
 const hsnRoute = require('./routes/hsn_document_routes'); // Correct naming
-
+const returnRoutes = require('./routes/cus_return_routes'); // Correct naming
 // Correct import for the cleanup job
 const { runCleanupJob } = require('./Deleted_job/Cleanup_product'); // Adjust path if necessary
 
@@ -136,6 +136,7 @@ app.use('/customer', customerRoutes);
 app.use('/invoice', invoiceRoutes);
 app.use('/shop', shopRoutes);
 app.use('/expense', expenseRoutes);
+app.use('/return', returnRoutes);
 app.use('/report', reportRoutes);
 app.use('/supplier_invoice', supplierInvoiceRoutes); // Consistent naming
 app.use('/hsn', hsnRoute); // Consistent naming
