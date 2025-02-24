@@ -65,7 +65,7 @@ const AdminController = {
           const token = jwt.sign(
             { id: user.id, email: user.email, role: user.role },
             process.env.JWT_SECRET || "Evvi_Solutions_Private_Limited",
-            { expiresIn: "5h" }
+            { expiresIn: "10h" }
           );
   
           // Respond with the token and user info

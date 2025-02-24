@@ -768,59 +768,8 @@ static getMostSoldMedicines(interval) {
         });
     }
     
-//under performance product
-    
-    static getLeastSoldMedicines(interval) {
-        return new Promise((resolve, reject) => {
-            const query = `
-            SELECT 
-               SELECT 
-    p.product_name, 
-    p.product_price, 
-    COALESCE(SUM(CAST(JSON_VALUE(i.quantity, CONCAT('$[', idx_values.idx, ']')) AS UNSIGNED)), 0) AS total_quantity_sold, 
-    ROUND(
-        ( COALESCE(SUM(CAST(JSON_VALUE(i.quantity, CONCAT('$[', idx_values.idx, ']')) AS UNSIGNED)), 0) /
-            (SELECT COALESCE(SUM(CAST(JSON_VALUE(i2.quantity, CONCAT('$[', idx_values.idx, ']')) AS UNSIGNED)), 1) 
-             FROM invoice_table i2 
-             CROSS JOIN (SELECT 0 AS idx UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4) idx_values
-             WHERE i2.invoice_created_at >= NOW() - INTERVAL 7 DAY )
-        ) * 100, 2
-    ) AS percentage_of_total_sales, 
-    (COALESCE(SUM(CAST(JSON_VALUE(i.quantity, CONCAT('$[', idx_values.idx, ']')) AS UNSIGNED)), 0) * p.product_price) AS total_sales_amount 
-FROM product_table p 
-LEFT JOIN (
-    SELECT i.*, idx_values.idx
-    FROM invoice_table i  
-    CROSS JOIN (SELECT 0 AS idx UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4) idx_values
-) AS i ON JSON_VALUE(i.product_id, CONCAT('$[', i.idx, ']')) = p.id
-WHERE (i.invoice_created_at >= NOW() - INTERVAL 7 DAY OR i.invoice_created_at IS NULL)
-GROUP BY p.product_name, p.product_price
-ORDER BY total_quantity_sold DESC 
-LIMIT 25;
 
-            `;
-    
-            db.query(query, (err, results) => {
-                console.log("Least sold medicines query results:", results);
-                if (err) {
-                    console.error("Database error during fetching least sold medicines:", err);
-                    return reject(err);
-                }
-    
-                if (results.length === 0) {
-                    resolve({
-                        message: `No sales data found in the last ${interval}`,
-                        data: [],
-                    });
-                } else {
-                    resolve({
-                        message: `Least sold medicines in the last ${interval}`,
-                        data: results,
-                    });
-                }
-            });
-        });
-    }
+
     
 
 

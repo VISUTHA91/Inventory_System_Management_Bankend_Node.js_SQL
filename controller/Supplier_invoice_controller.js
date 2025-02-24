@@ -193,31 +193,40 @@ const getAllSuppliersInvoices_page = async (req, res) => {
 
 
 
-// Get invoices by supplier ID
+// Get invoices by supplier ID with pagination
 const get_supplier_Invoices = async (req, res) => {
-  try {
-    const supplierId = req.params.supplierId;
-    const invoices = await supplierModel.getInvoicesBySupplier(supplierId);
-
-    if (invoices.length === 0) {
-      return res.status(404).json({
+    try {
+      const supplierId = req.params.supplierId;
+      const page = parseInt(req.query.page) || 1;  // Default page = 1
+      const limit = parseInt(req.query.limit) || 10; // Default limit = 10
+  
+      const { invoices, total } = await supplierModel.getInvoicesBySupplier(supplierId, page, limit);
+  
+      if (invoices.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: "No invoices found for this supplier",
+        });
+      }
+  
+      res.status(200).json({
+        success: true,
+        data: invoices,
+        pagination: {
+          current_page: page,
+          total_pages: Math.ceil(total / limit),
+          total_records: total,
+          per_page: limit,
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching invoices:", error);
+      res.status(500).json({
         success: false,
-        message: "No invoices found for this supplier",
+        message: "Internal Server Error",
       });
     }
-
-    res.status(200).json({
-      success: true,
-      data: invoices,
-    });
-  } catch (error) {
-    console.error("Error fetching invoices:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
-  }
-};
+  };
 
 
 

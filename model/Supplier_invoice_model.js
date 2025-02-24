@@ -311,34 +311,46 @@ const insertInvoice = (supplierId, supplierBillNo, description, totalAmount, inv
 };
 
 
-// Get all invoices for a supplier
-const getInvoicesBySupplier = async (supplierId) => {
-  try {
-    const query = `
-      SELECT 
-          si.invoice_id, 
-          si.supplier_id, 
-          s.company_name,
-          si.supplier_bill_no, 
-          si.description, 
-          si.bill_amount, 
-          si.balance_bill_amount, 
-          si.invoice_bill_date, 
-          si.due_date, 
-          si.status, 
-          si.created_at,
-          (si.bill_amount - si.balance_bill_amount) AS total_paid
-      FROM supplier_invoices si
-      JOIN supplier s ON si.supplier_id = s.supplier_id
-      WHERE si.supplier_id = ?`;
-
-    const [rows] = await db.promise().query(query, [supplierId]);
-    return rows;
-  } catch (error) {
-    console.error("Error fetching supplier invoices:", error);
-    throw error;
-  }
-};
+// Get all invoices for a supplier with pagination
+const getInvoicesBySupplier = async (supplierId, page = 1, limit = 10) => {
+    try {
+      const offset = (page - 1) * limit;
+  
+      const query = `
+        SELECT 
+            si.invoice_id, 
+            si.supplier_id, 
+            s.company_name,
+            si.supplier_bill_no, 
+            si.description, 
+            si.bill_amount, 
+            si.balance_bill_amount, 
+            si.invoice_bill_date, 
+            si.due_date, 
+            si.status, 
+            si.created_at,
+            (si.bill_amount - si.balance_bill_amount) AS total_paid
+        FROM supplier_invoices si
+        JOIN supplier s ON si.supplier_id = s.supplier_id
+        WHERE si.supplier_id = ?
+        LIMIT ? OFFSET ?`;
+  
+      const [rows] = await db.promise().query(query, [supplierId, limit, offset]);
+  
+      // Count total invoices
+      const countQuery = `SELECT COUNT(*) AS total FROM supplier_invoices WHERE supplier_id = ?`;
+      const [countRows] = await db.promise().query(countQuery, [supplierId]);
+      const total = countRows[0].total;
+  
+      return { invoices: rows, total };
+    } catch (error) {
+      console.error("Error fetching supplier invoices:", error);
+      throw error;
+    }
+  };
+  
+  
+  
 
 // Insert a payment
 
