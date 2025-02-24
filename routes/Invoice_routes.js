@@ -38,7 +38,7 @@ router.get("/report_Gen", invoiceController.getInvoiceListController);
 // 🔹 Total Sales Summary (JSON)
 router.get("/total-sales", invoiceController.getTotalSalesController);
 
-
+//changes
 
 
 // // Route to get income and expense details for a specific time range
