@@ -97,7 +97,8 @@ class Invoice {
         total_price,
         discount,
         final_price,                 
-        payment_status
+        payment_status,
+        payment_method
     } = data;
 
     // console.log(discount);
@@ -112,9 +113,9 @@ class Invoice {
     const query = `
     INSERT INTO invoice_table (
         invoice_number, customer_id, product_id, quantity, total_price, 
-        discount, final_price, payment_status
+        discount, final_price, payment_status,payment_method
     ) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ? )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ? ,?)
 `;
 
     const [result] = await db.promise().query(query, [
@@ -125,7 +126,8 @@ class Invoice {
         total_price,
         JSON.stringify(discount), // Store discount as a JSON array
         final_price,       
-        payment_status
+        payment_status,
+        payment_method
     ]);
 
     // Return inserted details
@@ -138,6 +140,7 @@ class Invoice {
         discount,
         final_price,        
         payment_status,
+        payment_method,
         invoice_id: result.insertId // Add the generated invoice ID
     };
 }
@@ -339,6 +342,7 @@ class Invoice {
                 discount = ?, 
                 final_price = ?, 
                 payment_status = ?, 
+                payment_method = ?,
                 invoice_updated_at = NOW()
             WHERE id = ?
         `;
@@ -351,6 +355,7 @@ class Invoice {
             JSON.stringify(productDiscounts), // Convert product discounts to JSON string
             finalPrice,
             payment_status,
+            payment_method,
             invoiceId,
         ]);
 

@@ -246,7 +246,7 @@ exports.generateInvoiceNumber = async (req, res) => {
 exports.createInvoice = async (req, res) => {
     try {
 
-        const { customer_name, phone, products, payment_status } = req.body;
+        const { customer_name, phone, products, payment_status,payment_method } = req.body;
 
         console.log(req.body);
         console.log('Products:', products);
@@ -322,7 +322,8 @@ exports.createInvoice = async (req, res) => {
                 discount: totalDiscount.toFixed(2),
                 total_price: totalPrice.toFixed(2),
                 final_price: finalPrice.toFixed(2),
-                payment_status
+                payment_status,
+                payment_method
             };
 
             const invoice = await Invoice.createInvoice(invoiceData);
@@ -334,6 +335,7 @@ exports.createInvoice = async (req, res) => {
                     invoice_number: invoice.invoice_number,
                     customer_id: invoice.customer_id,
                     payment_status: invoice.payment_status,
+                    payment_method:invoice.payment_method,
                     products: detailedProducts,
                     summary: {
                         total_price: totalPrice.toFixed(2),
@@ -427,7 +429,7 @@ exports.getAllInvoicespage = async (req, res) => {
 exports.updateInvoice = async (req, res) => {
     try {
         const invoiceId = req.params.id; // Get the invoice ID from the URL
-        const { invoice_number, customer_id, products, payment_status } = req.body;
+        const { invoice_number, customer_id, products, payment_status,payment_method } = req.body;
 
         // Check if customer exists before updating the invoice
         const customerExists = await Invoice.checkCustomerExists(customer_id);
@@ -441,6 +443,7 @@ exports.updateInvoice = async (req, res) => {
             customer_id,
             products,
             payment_status,
+            payment_method,
             invoice_updated_at : new Date(),
         };
 
