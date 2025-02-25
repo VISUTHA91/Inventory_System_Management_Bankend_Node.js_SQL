@@ -136,26 +136,26 @@ exports.generateInvoiceNumber = async (req, res) => {
 //     }
 // };
 
-//****************visutha provide code
+
+
+//****************auto generate customer with invoice
 
 // exports.createInvoice = async (req, res) => {
 //     try {
-//         // Fix: Map invoiceDetails to products
-//         const { customer_name, phone, invoiceDetails, payment_status } = req.body;
-//         const products = invoiceDetails;
 
-//         console.log("Received Body:", req.body);
-//         console.log("Products:", products);
+//         const { customer_name, phone, products, payment_status,payment_method } = req.body;
 
-//         if (!Array.isArray(products) || products.length === 0) {
-//             return res.status(400).json({ message: 'Invalid or missing product data' });
-//         }
+//         console.log(req.body);
+//         console.log('Products:', products);
 
 //         let customer_id;
+
+//         // Check if the customer exists
 //         const existingCustomer = await Customer.checkCustomerExists(phone);
 //         if (existingCustomer) {
-//             customer_id = existingCustomer.customer_id;
+//             customer_id = existingCustomer.customer_id; // Fetch customer ID if exists
 //         } else {
+//             // Create a new customer if not found
 //             customer_id = await Customer.create({ customer_name, phone });
 //             console.log("New customer created with ID:", customer_id);
 //         }
@@ -165,56 +165,66 @@ exports.generateInvoiceNumber = async (req, res) => {
 //         let totalDiscount = 0;
 //         const detailedProducts = [];
 
+//         // Validate products and calculate totals
 //         for (const item of products) {
-//             const productDetails = await Invoice.checkProductExists(item.id); // Fix: Match product ID field
+//             const productDetails = await Invoice.checkProductExists(item.product_id);
 //             if (!productDetails) {
-//                 return res.status(404).json({ message: `Product with ID ${item.id} not found `});
+//                 return res.status(404).json({ message: `Product with ID ${item.product_id} not found` });
 //             }
-//             if (productDetails.product_quantity < item.product_quantity) {
-//                 return res.status(400).json({ message: `Insufficient stock for product with ID ${item.id} `});
+//             if (productDetails.product_quantity < item.quantity) {
+//                 return res.status(400).json({
+//                     message: `Insufficient stock for product with ID ${item.product_id}`,
+//                 });
 //             }
 
-//             const unitPrice = parseFloat(item.sellingPrice);
-//             const subtotal = unitPrice * item.product_quantity;
-//             const gstAmount = parseFloat(((subtotal * parseFloat(item.gst)) / 100).toFixed(2));
-//             const discountAmount = 0; // You might need to handle discounts properly
+//             const unitPrice = parseFloat(productDetails.product_price);
+//             const subtotal = unitPrice * item.quantity;
+//             const gstAmount = parseFloat(((subtotal * productDetails.GST) / 100).toFixed(2));
+//             const discountAmount = parseFloat(((subtotal * productDetails.product_discount) / 100).toFixed(2));
 
 //             totalPrice += subtotal;
 //             totalGST += gstAmount;
 //             totalDiscount += discountAmount;
 
 //             detailedProducts.push({
-//                 product_id: item.id,
-//                 product_name: item.product_name,
+//                 product_id: item.product_id,
+//                 product_name: productDetails.product_name,
 //                 unit_price: unitPrice.toFixed(2),
-//                 quantity: item.product_quantity,
+//                 quantity: item.quantity,
 //                 subtotal: subtotal.toFixed(2),
 //                 discount: discountAmount.toFixed(2),
 //                 gst: gstAmount.toFixed(2),
 //                 final_price: (subtotal + gstAmount - discountAmount).toFixed(2),
 //             });
 //         }
+
 //         const finalPrice = parseFloat((totalPrice + totalGST - totalDiscount).toFixed(2));
 
 //         if (isNaN(finalPrice) || isNaN(totalPrice) || isNaN(totalGST) || isNaN(totalDiscount)) {
 //             return res.status(400).json({ message: 'Error in calculating prices' });
 //         }
+
 //         const invoiceNumber = await Invoice.generateInvoiceNumber();
+
 //         try {
 //             for (const item of products) {
-//                 await Invoice.updateStock(item.id, item.product_quantity);
+//                 await Invoice.updateStock(item.product_id, item.quantity);
 //             }
+
 //             const invoiceData = {
 //                 invoice_number: invoiceNumber,
 //                 customer_id,
-//                 product_id: products.map((p) => p.id),
-//                 quantity: products.map((p) => p.product_quantity),
+//                 product_id: products.map((p) => p.product_id),
+//                 quantity: products.map((p) => p.quantity),
 //                 discount: totalDiscount.toFixed(2),
 //                 total_price: totalPrice.toFixed(2),
 //                 final_price: finalPrice.toFixed(2),
-//                 payment_status
+//                 payment_status,
+//                 payment_method
 //             };
+
 //             const invoice = await Invoice.createInvoice(invoiceData);
+
 //             res.status(201).json({
 //                 message: 'Invoice created successfully',
 //                 invoice_details: {
@@ -222,6 +232,7 @@ exports.generateInvoiceNumber = async (req, res) => {
 //                     invoice_number: invoice.invoice_number,
 //                     customer_id: invoice.customer_id,
 //                     payment_status: invoice.payment_status,
+//                     payment_method:invoice.payment_method,
 //                     products: detailedProducts,
 //                     summary: {
 //                         total_price: totalPrice.toFixed(2),
@@ -241,22 +252,24 @@ exports.generateInvoiceNumber = async (req, res) => {
 //     }
 // };
 
-//****************auto generate customer with invoice
-
 exports.createInvoice = async (req, res) => {
     try {
-
-        const { customer_name, phone, products, payment_status,payment_method } = req.body;
+        const { customer_name, phone, products, payment_status, payment_method } = req.body;
 
         console.log(req.body);
         console.log('Products:', products);
+
+        // ✅ Validate phone number
+        if (!phone || typeof phone !== 'string' || !/^\d{10,15}$/.test(phone)) {
+            return res.status(400).json({ message: 'Invalid phone number. It must contain only digits and be 10-15 characters long.' });
+        }
 
         let customer_id;
 
         // Check if the customer exists
         const existingCustomer = await Customer.checkCustomerExists(phone);
         if (existingCustomer) {
-            customer_id = existingCustomer.customer_id; // Fetch customer ID if exists
+            customer_id = existingCustomer.customer_id;
         } else {
             // Create a new customer if not found
             customer_id = await Customer.create({ customer_name, phone });
@@ -268,16 +281,22 @@ exports.createInvoice = async (req, res) => {
         let totalDiscount = 0;
         const detailedProducts = [];
 
-        // Validate products and calculate totals
+        // ✅ Validate products array
+        if (!Array.isArray(products) || products.length === 0) {
+            return res.status(400).json({ message: 'Invalid products data. It must be a non-empty array.' });
+        }
+
         for (const item of products) {
+            if (!item.product_id || isNaN(item.product_id) || !item.quantity || isNaN(item.quantity) || item.quantity <= 0) {
+                return res.status(400).json({ message: 'Invalid product details. Product ID and quantity must be valid numbers greater than 0.' });
+            }
+
             const productDetails = await Invoice.checkProductExists(item.product_id);
             if (!productDetails) {
                 return res.status(404).json({ message: `Product with ID ${item.product_id} not found` });
             }
             if (productDetails.product_quantity < item.quantity) {
-                return res.status(400).json({
-                    message: `Insufficient stock for product with ID ${item.product_id}`,
-                });
+                return res.status(400).json({ message: `Insufficient stock for product with ID ${item.product_id}` });
             }
 
             const unitPrice = parseFloat(productDetails.product_price);
@@ -335,7 +354,7 @@ exports.createInvoice = async (req, res) => {
                     invoice_number: invoice.invoice_number,
                     customer_id: invoice.customer_id,
                     payment_status: invoice.payment_status,
-                    payment_method:invoice.payment_method,
+                    payment_method: invoice.payment_method,
                     products: detailedProducts,
                     summary: {
                         total_price: totalPrice.toFixed(2),
@@ -354,7 +373,6 @@ exports.createInvoice = async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
-
 
 
 
