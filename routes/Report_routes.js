@@ -21,18 +21,22 @@
 // routes/salesRoutes.js
 const express = require('express');
 const router = express.Router();
-const salesController = require('../controller/Report_controller');
+// const salesController = require('../controller/Report_controller');
+const { getIncomeReport } = require("../controller/Report_controller");
 
-// Daily sales report
-router.get('/sales-report/daily', salesController.getDailySales);
+// // Daily sales report
+// router.get('/sales-report/daily', salesController.getDailySales);
 
-// Weekly sales report
-router.get('/sales-report/weekly', salesController.getWeeklySales);
+// // Weekly sales report
+// router.get('/sales-report/weekly', salesController.getWeeklySales);
 
-// Monthly sales report
-router.get('/sales-report/monthly', salesController.getMonthlySales);
+// // Monthly sales report
+// router.get('/sales-report/monthly', salesController.getMonthlySales);
 
-// Yearly sales report
-router.get('/sales-report/yearly', salesController.getYearlySales);
+// // Yearly sales report
+// router.get('/sales-report/yearly', salesController.getYearlySales);
+
+// Individual routes for automatic reports
+router.get("/income-report/:type", getIncomeReport);
 
 module.exports = router;
