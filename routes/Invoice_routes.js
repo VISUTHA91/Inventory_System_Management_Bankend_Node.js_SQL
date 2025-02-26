@@ -33,12 +33,15 @@ router.get('/most_sold_medicines',invoiceController.getMostSoldMedicinesControll
 router.get('/most_sold_details',authMiddleware,adminOrStaff,invoiceController.getAllSoldProductsController);
 router.get('/pagination_sales',authMiddleware,adminOrStaff,invoiceController.getAllSoldProductsControllerpage);
 
-// 🔹 Invoice List (JSON, CSV, PDF)
-router.get("/report_Gen", invoiceController.getInvoiceListController);
-// 🔹 Total Sales Summary (JSON)
-router.get("/total-sales", invoiceController.getTotalSalesController);
+// // 🔹 Invoice List (JSON, CSV, PDF)
+// router.get("/report_Gen", invoiceController.getInvoiceListController);
+// // 🔹 Total Sales Summary (JSON)
+// router.get("/total-sales", invoiceController.getTotalSalesController);
 
 //changes
+
+router.get('/sales-report/csv', invoiceController.generateCSVReport);
+router.get('/sales-report/pdf',invoiceController.generatePDFReport);
 
 
 // // Route to get income and expense details for a specific time range

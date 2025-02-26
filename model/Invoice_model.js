@@ -491,64 +491,139 @@ class Invoice {
         });
     }
 
+//correct code of pdf/csv
+    
+        // // 🔹 Fetch Detailed Invoice Data (Promise-Based)
+        // static getInvoiceList(startDate, endDate, interval, productName, categoryName) {
+        //     return new Promise((resolve, reject) => {
+        //         let query = `
+        //             SELECT i.*, c.customer_name
+        //             FROM invoice_table i
+        //             JOIN customer_table c ON i.customer_id = c.customer_id
+        //             WHERE 1=1
+        //         `;
+    
+        //         let values = [];
+    
+        //         if (startDate && endDate) {
+        //             query += ` AND invoice_created_at BETWEEN ? AND ?`;
+        //             values.push(startDate, endDate);
+        //         }
+        //         if (interval) {
+        //             query += ` AND invoice_created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)`;
+        //             values.push(interval);
+        //         }
+        //         if (productName) {
+        //             query += ` AND product_name LIKE ?`;
+        //             values.push(`%${productName}%`);
+        //         }
+        //         if (categoryName) {
+        //             query += ` AND category_name LIKE ?`;
+        //             values.push(`%${categoryName}%`);
+        //         }
+    
+        //         db.query(query, values, (err, rows) => {
+        //             if (err) {
+        //                 console.error("Error fetching invoice list:", err);
+        //                 return reject(err);
+        //             }
+        //             resolve(rows);
+        //         });
+        //     });
+        // }
+    
+        // // 🔹 Fetch Total Sales Summary (Promise-Based)
+        // static getTotalSales() {
+        //     return new Promise((resolve, reject) => {
+        //         const query = `SELECT SUM(final_price) AS total_sales, COUNT(invoice_id) AS total_invoices FROM invoice_table`;
+    
+        //         db.query(query, (err, rows) => {
+        //             if (err) {
+        //                 console.error("Error fetching total sales:", err);
+        //                 return reject(err);
+        //             }
+        //             resolve(rows[0]); // Return first object
+        //         });
+        //     });
+        // }
+    
+    
 
-    
-        // 🔹 Fetch Detailed Invoice Data (Promise-Based)
-        static getInvoiceList(startDate, endDate, interval, productName, categoryName) {
-            return new Promise((resolve, reject) => {
-                let query = `
-                    SELECT i.*, c.customer_name
-                    FROM invoice_table i
-                    JOIN customer_table c ON i.customer_id = c.customer_id
-                    WHERE 1=1
-                `;
-    
-                let values = [];
-    
-                if (startDate && endDate) {
-                    query += ` AND invoice_created_at BETWEEN ? AND ?`;
-                    values.push(startDate, endDate);
-                }
-                if (interval) {
-                    query += ` AND invoice_created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)`;
-                    values.push(interval);
-                }
-                if (productName) {
-                    query += ` AND product_name LIKE ?`;
-                    values.push(`%${productName}%`);
-                }
-                if (categoryName) {
-                    query += ` AND category_name LIKE ?`;
-                    values.push(`%${categoryName}%`);
-                }
-    
-                db.query(query, values, (err, rows) => {
-                    if (err) {
-                        console.error("Error fetching invoice list:", err);
-                        return reject(err);
-                    }
-                    resolve(rows);
-                });
-            });
-        }
-    
-        // 🔹 Fetch Total Sales Summary (Promise-Based)
-        static getTotalSales() {
-            return new Promise((resolve, reject) => {
-                const query = `SELECT SUM(final_price) AS total_sales, COUNT(invoice_id) AS total_invoices FROM invoice_table`;
-    
-                db.query(query, (err, rows) => {
-                    if (err) {
-                        console.error("Error fetching total sales:", err);
-                        return reject(err);
-                    }
-                    resolve(rows[0]); // Return first object
-                });
-            });
-        }
-    
-    
-  
+//correct code on proper work csv
+        
+static getSalesReport = () => {
+    const query = `WITH RECURSIVE split_invoice AS (
+    -- Base Case: Extract the first product and its quantity
+    SELECT 
+        id, 
+        invoice_number, 
+        customer_id,
+        JSON_UNQUOTE(JSON_EXTRACT(product_id, '$[0]')) AS product_id,
+        JSON_UNQUOTE(JSON_EXTRACT(quantity, '$[0]')) AS quantity,
+        JSON_REMOVE(product_id, '$[0]') AS remaining_products,
+        JSON_REMOVE(quantity, '$[0]') AS remaining_quantities,
+        1 AS level
+    FROM invoice_table
+
+    UNION ALL
+
+    -- Recursive Step: Extract remaining products and quantities
+    SELECT 
+        id, 
+        invoice_number, 
+        customer_id,
+        JSON_UNQUOTE(JSON_EXTRACT(remaining_products, '$[0]')),
+        JSON_UNQUOTE(JSON_EXTRACT(remaining_quantities, '$[0]')),
+        JSON_REMOVE(remaining_products, '$[0]'),
+        JSON_REMOVE(remaining_quantities, '$[0]'),
+        level + 1
+    FROM split_invoice
+    WHERE JSON_LENGTH(remaining_products) > 0
+)
+
+-- Generate the Sales Report
+SELECT 
+    p.product_name,
+    SUM(s.quantity) AS total_quantity_sold,
+    p.product_price,
+    SUM(s.quantity * p.product_price) AS total_sales_amount
+FROM split_invoice s
+JOIN product_table p ON p.id = s.product_id
+GROUP BY p.product_name, p.product_price
+ORDER BY p.product_name;
+
+    `;
+
+    return new Promise((resolve, reject) => {
+        db.query(query, (err, results) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(results);
+            }
+        });
+    });
+}
+
+// Get Total Sales Summary
+static getTotalSalesSummary(startDate, endDate) {
+    return new Promise((resolve, reject) => {
+        const query = `
+            SELECT 
+                SUM(s.total_price) AS final_sales_value 
+            FROM sales_table s
+            WHERE s.sale_date BETWEEN ? AND ?
+        `;
+
+        db.query(query, [startDate, endDate], (err, rows) => {
+            if (err) {
+                console.error("Error fetching total sales summary:", err);
+                return reject(err);
+            }
+            resolve(rows[0]); // Return the first row containing total sales
+        });
+    });
+}
 
 
     

@@ -651,39 +651,60 @@ exports.deleteInvoice = async (req, res) => {
 
 
 const { generateCSV, generatePDF } = require("../Helper/export_helper");
+//correct code of pdf and csv
+// exports.getInvoiceListController = async (req, res) => {
+//     try {
+//         const { startDate, endDate, period, productName, categoryName, format } = req.query;
+//         let interval = null;
 
-exports.getInvoiceListController = async (req, res) => {
+//         if (period === "1week") interval = 7;
+//         else if (period === "2week") interval = 14;
+//         else if (period === "1month") interval = 30;
+//         else if (period) return res.status(400).json({ message: "Invalid period. Use 1week, 2week, or 1month." });
+
+//         const response = await Invoice.getInvoiceList(startDate, endDate, interval, productName, categoryName);
+
+//         if (!response || response.length === 0) {
+//             return res.status(404).json({ message: "No invoices found" });
+//         }
+
+//         // Return JSON if no format is specified
+//         if (!format) return res.status(200).json(response);
+
+//         // Handle CSV Export
+//         if (format === "csv") return await generateCSV(response, res, "invoice_report.csv");
+
+//         // Handle PDF Export
+//         if (format === "pdf") return await generatePDF(response, res, "invoice_report.pdf");
+
+//         return res.status(400).json({ message: "Invalid format. Use csv or pdf." });
+//     } catch (error) {
+//         console.error("Error in invoice controller:", error);
+//         res.status(500).json({ message: "Error fetching invoice data", error: error.message });
+//     }
+// };
+// Fetch Sales Report Data
+// 📌 CSV Report Controller
+exports.generateCSVReport = async (req, res) => {
     try {
-        const { startDate, endDate, period, productName, categoryName, format } = req.query;
-        let interval = null;
-
-        if (period === "1week") interval = 7;
-        else if (period === "2week") interval = 14;
-        else if (period === "1month") interval = 30;
-        else if (period) return res.status(400).json({ message: "Invalid period. Use 1week, 2week, or 1month." });
-
-        const response = await Invoice.getInvoiceList(startDate, endDate, interval, productName, categoryName);
-
-        if (!response || response.length === 0) {
-            return res.status(404).json({ message: "No invoices found" });
-        }
-
-        // Return JSON if no format is specified
-        if (!format) return res.status(200).json(response);
-
-        // Handle CSV Export
-        if (format === "csv") return await generateCSV(response, res, "invoice_report.csv");
-
-        // Handle PDF Export
-        if (format === "pdf") return await generatePDF(response, res, "invoice_report.pdf");
-
-        return res.status(400).json({ message: "Invalid format. Use csv or pdf." });
+        const data = await Invoice.getSalesReport();
+        const filePath = await generateCSV(data);
+        res.download(filePath);
     } catch (error) {
-        console.error("Error in invoice controller:", error);
-        res.status(500).json({ message: "Error fetching invoice data", error: error.message });
+        res.status(500).json({ message: 'Error generating CSV report', error });
     }
 };
 
+// 📌 PDF Report Controller
+exports.generatePDFReport = async (req, res) => {
+    try {
+        const data = await Invoice.getSalesReport();
+        const filePath = await generatePDF(data);
+        res.download(filePath);
+    } catch (error) {
+        res.status(500).json({ message: 'Error generating PDF report', error });
+    }
+};
 
 
 
