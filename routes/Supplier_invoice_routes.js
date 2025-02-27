@@ -19,6 +19,7 @@
 const express = require('express');
 const router = express.Router();
 const supplierController = require('../controller/Supplier_invoice_controller');
+const { authMiddleware, adminOnly, limiter, adminOrStaff } = require("../middleware/auth_middleware");
 
 router.post('/invoices', supplierController.createInvoice);
 router.post('/payments', supplierController.addPayment);

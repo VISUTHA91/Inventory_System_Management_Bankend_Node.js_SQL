@@ -21,7 +21,7 @@ router.get('/Allpro_pagination', authMiddleware, adminOrStaff, productController
 
 router.get('/Allpro_list', authMiddleware, adminOrStaff, productController.getAllPro);  // Get all products
 
-router.get('/sup_cat_pro/:supplier_id', authMiddleware, adminOrStaff, productController.getSupplierCategories);//suppliers product and category list
+router.get('/sup_cat_pro/:supplier_id', authMiddleware, adminOnly, productController.getSupplierCategories);//suppliers product and category list
 
 router.get('/stock_list_product', authMiddleware, adminOrStaff, productController.getAllProducts_stock_search);
 

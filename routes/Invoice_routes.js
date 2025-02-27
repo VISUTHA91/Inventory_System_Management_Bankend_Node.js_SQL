@@ -26,12 +26,14 @@ router.put('/invoiceup/:id', authMiddleware,adminOnly,invoiceController.updateIn
 router.delete('/invoicedel/:id', authMiddleware,adminOnly,invoiceController.deleteInvoice);
 
 // Route to get most sold medicines in the last 1w,2w,30 days
-router.get('/most_sold_medicines',invoiceController.getMostSoldMedicinesController);
+router.get('/most_sold_medicines',authMiddleware,adminOnly,invoiceController.getMostSoldMedicinesController);
 
 
 // router.get('/most_sold',invoiceController.getMostSoldMedicinesControllerwith);(search)
-router.get('/most_sold_details',authMiddleware,adminOrStaff,invoiceController.getAllSoldProductsController);
-router.get('/pagination_sales',authMiddleware,adminOrStaff,invoiceController.getAllSoldProductsControllerpage);
+router.get('/most_sold_details',authMiddleware,adminOnly,invoiceController.getAllSoldProductsController);
+
+
+router.get('/pagination_sales',authMiddleware,adminOnly,invoiceController.getAllSoldProductsControllerpage);
 
 // // 🔹 Invoice List (JSON, CSV, PDF)
 // router.get("/report_Gen", invoiceController.getInvoiceListController);

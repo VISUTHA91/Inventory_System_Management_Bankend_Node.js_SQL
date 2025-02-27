@@ -23,6 +23,7 @@ const express = require('express');
 const router = express.Router();
 // const salesController = require('../controller/Report_controller');
 const { getIncomeReport } = require("../controller/Report_controller");
+const { authMiddleware, adminOnly, limiter, adminOrStaff } = require("../middleware/auth_middleware");
 
 // // Daily sales report
 // router.get('/sales-report/daily', salesController.getDailySales);

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const shopController = require('../controller/pharmacy_details_controllerr');
+const { authMiddleware, adminOnly, limiter, adminOrStaff } = require("../middleware/auth_middleware");
 
 // Create a shop
 router.post('/insert', shopController.createShop);

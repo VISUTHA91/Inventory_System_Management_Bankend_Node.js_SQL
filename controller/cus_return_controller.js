@@ -58,17 +58,23 @@ class ProductReturnController {
         }
     }
 
-    // Get list of rejected invoices
-    static async getRejectedInvoices(req, res) {
-        try {
-            const rejectedInvoices = await ProductReturn.getRejectedInvoices();
+   // Fetch Rejected Invoices from DB
+   static async getRejectedInvoices(req, res) {
+    try {
+        console.log("Fetching rejected invoices...");
+        const rejectedInvoices = await ProductReturn.getAllRejectedInvoices();
 
-            res.status(200).json(rejectedInvoices);
-        } catch (error) {
-            console.error('Error retrieving rejected invoices:', error);
-            res.status(500).json({ message: 'Internal Server Error' });
+        // Check if no records are found
+        if (!rejectedInvoices || rejectedInvoices.length === 0) {
+            return res.status(404).json({ message: "No rejected invoices found" });
         }
+
+        res.status(200).json(rejectedInvoices);
+    } catch (error) {
+        console.error("Error retrieving rejected invoices:", error);
+        res.status(500).json({ message: "Internal Server Error" });
     }
+}
 
     // Delete a product return
     static async deleteReturn(req, res) {

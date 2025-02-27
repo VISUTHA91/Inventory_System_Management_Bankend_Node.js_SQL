@@ -1,8 +1,5 @@
 const db = require('../config/Database'); // Database connection (e.g., MySQL)
 
-
-
-
 class ProductReturn {
     // Create a product return
     static createReturn(invoice_id, product_id, quantity, return_reason) {
@@ -18,8 +15,6 @@ class ProductReturn {
             });
         });
     }
-
-
     
 
 static checkPurchasedQuantity(invoice_id, product_id) {
@@ -98,22 +93,34 @@ static getReturnsByInvoice(invoice_id) {
 
     
 
-    // Get all rejected invoices
-    static getRejectedInvoices() {
-        return new Promise((resolve, reject) => {
-            const query = `SELECT i.*, c.customer_name, c.customer_email 
-                           FROM invoice_table i
-                           JOIN customer_table c ON i.customer_id = c.id
-                           WHERE i.status = 'rejected'`;
+  // Fetch Rejected Invoices from DB
+  static getAllRejectedInvoices() {
+    return new Promise((resolve, reject) => {
+        const query = `SELECT i.*, c.customer_name, c.customer_email 
+                       FROM invoice_table i
+                       JOIN customer_table c ON i.customer_id = c.id
+                       WHERE i.status = 'rejected'`;
 
-            db.query(query, (err, result) => {
-                if (err) {
-                    return reject(err);
-                }
-                resolve(result);
-            });
+        db.query(query, (err, result) => {
+            if (err) {
+                return reject(err);
+            }
+            resolve(result);
         });
+    });
+}
+
+// API Route Handler for Rejected Invoices
+static async getRejectedInvoices(req, res) {
+    try {
+        const rejectedInvoices = await ProductReturn.getAllRejectedInvoices();
+        res.status(200).json(rejectedInvoices);
+    } catch (error) {
+        console.error('Error retrieving rejected invoices:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
     }
+}
+
 
     // Delete a product return entry by return_id
     static deleteReturn(return_id) {

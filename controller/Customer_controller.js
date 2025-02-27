@@ -23,6 +23,8 @@ const Customer = require('../model/Customer_model');
 
 
 // Create a new customer
+
+
 exports.createCustomer = async (req, res) => {
     try {
         const {
