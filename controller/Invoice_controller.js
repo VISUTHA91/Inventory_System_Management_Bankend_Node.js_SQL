@@ -625,7 +625,6 @@ exports.getInvoiceById = async (req, res) => {
 //correct code with all changes
 // const PDFDocument = require('pdfkit');
 
-
 // exports.downloadInvoicePdf = async (req, res) => {
 //     try {
 //         const { id } = req.params;
@@ -755,6 +754,7 @@ exports.getInvoiceById = async (req, res) => {
 // };
 
 
+//date correction
 const PDFDocument = require('pdfkit');
 
 exports.downloadInvoicePdf = async (req, res) => {

@@ -8,24 +8,65 @@ const formatDate = (date) => {
 
 // // Create Expense
 
+// exports.createExpense = async (req, res) => {
+//     try {
+//         const { category, amount, date, description } = req.body;
+
+//         if (!category || !amount || !date) {
+//             return res.status(400).json({ success: false, message: 'Category, amount, and date are required' });
+//         }
+
+//         // Format the date before inserting into DB
+//         const formattedDate = formatDate(date);
+
+//         await Expensedetails.create({ category, amount, date: formattedDate, description });
+//         res.status(201).json({ success: true, message: 'Expense created successfully' });
+//     } catch (err) {
+//         console.error(err);
+//         res.status(500).json({ success: false, message: 'Server error', error: err.message });
+//     }
+// };
+
+
+const moment = require('moment');
+
+
 exports.createExpense = async (req, res) => {
     try {
-        const { category, amount, date, description } = req.body;
+        let { category, amount, date, description } = req.body;
 
         if (!category || !amount || !date) {
             return res.status(400).json({ success: false, message: 'Category, amount, and date are required' });
         }
 
-        // Format the date before inserting into DB
-        const formattedDate = formatDate(date);
+        // Validate and format the date
+        const formattedDate = moment(date, "DD-MM-YYYY", true);
+        if (!formattedDate.isValid()) {
+            return res.status(400).json({ success: false, message: 'Invalid date format. Use DD-MM-YYYY' });
+        }
 
-        await Expensedetails.create({ category, amount, date: formattedDate, description });
+        const finalDate = formattedDate.format("YYYY-MM-DD");
+
+        console.log("Formatted Date:", finalDate); // Debugging log
+
+        // Insert into database
+        const result = await Expensedetails.create({ category, amount, date: finalDate, description });
+
+        console.log("Insert Expense Result:", result); // Debugging log
+
+        // Check if the row was inserted
+        if (!result || result.affectedRows === 0) {
+            return res.status(500).json({ success: false, message: 'Failed to insert expense' });
+        }
+
         res.status(201).json({ success: true, message: 'Expense created successfully' });
     } catch (err) {
-        console.error(err);
+        console.error("Error creating expense:", err);
         res.status(500).json({ success: false, message: 'Server error', error: err.message });
     }
 };
+
+
 
 //expense details
 exports.getAllExpenses = async (req, res) => {
@@ -46,6 +87,7 @@ exports.getAllExpenses = async (req, res) => {
 
 
 // Get all expenses with pagination
+
 // exports.getAllExpensespage = async (req, res) => {
 //     try {
 //         // Get page and limit from query params, set defaults
@@ -62,6 +104,7 @@ exports.getAllExpenses = async (req, res) => {
 //         res.status(200).json({
 //             success: true,
 //             currentPage: page,
+//             limit, // Include the limit in response
 //             totalPages,
 //             totalRecords,
 //             data: expenses,
@@ -74,14 +117,19 @@ exports.getAllExpenses = async (req, res) => {
 // };
 exports.getAllExpensespage = async (req, res) => {
     try {
-        // Get page and limit from query params, set defaults
+        // Validate & parse query parameters
         let { page, limit } = req.query;
-        page = parseInt(page) || 1;
-        limit = parseInt(limit) || 10;
+        page = parseInt(page, 10);
+        limit = parseInt(limit, 10);
+
+        // Set defaults if values are invalid
+        if (isNaN(page) || page < 1) page = 1;
+        if (isNaN(limit) || limit < 1) limit = 10;
 
         const { expenses, totalPages, totalRecords } = await Expensedetails.getAllpage(page, limit);
 
-        if (!Array.isArray(expenses) || expenses.length === 0) {
+        // Handle no records case
+        if (!expenses.length) {
             return res.status(404).json({ success: false, message: "No expenses found" });
         }
 

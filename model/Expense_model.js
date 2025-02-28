@@ -3,11 +3,19 @@ const db = require("../config/Database.js");
 class Expense {
   
 //date mean expence_date
-    static create(data) {
-        const query = "INSERT INTO expense_table (category, amount, date, description) VALUES (?, ?, ?, ?)";
-        return db.execute(query, [data.category, data.amount, data.date, data.description]);
+static async create(data) {
+    const query = "INSERT INTO expense_table (category, amount, date, description) VALUES (?, ?, ?, ?)";
+    try {
+        const [result] = await db.promise().execute(query, [data.category, data.amount, data.date, data.description]);
+        console.log("DB Insert Result:", result); // Debugging log
+        return result;
+    } catch (error) {
+        console.error("Database Insert Error:", error);
+        throw error;
     }
-    
+}
+
+
 
    
     static getAll() {
@@ -23,8 +31,39 @@ class Expense {
     }
 
 
-    static getAllpage(page = 1, limit = 10) {
-        return new Promise((resolve, reject) => {
+    // static getAllpage(page = 1, limit = 10) {
+    //     return new Promise((resolve, reject) => {
+    //         const offset = (page - 1) * limit;
+    
+    //         // Query to get paginated data
+    //         const query = `SELECT * FROM expense_table ORDER BY created_at DESC LIMIT ? OFFSET ?`;
+    
+    //         // Query to get total records
+    //         const countQuery = `SELECT COUNT(*) AS total FROM expense_table`;
+    
+    //         db.query(countQuery, (countErr, countResults) => {
+    //             if (countErr) {
+    //                 console.error("Database Count Query Error:", countErr);
+    //                 return reject(countErr);
+    //             }
+    
+    //             const totalRecords = countResults[0].total;
+    //             const totalPages = Math.ceil(totalRecords / limit);
+    
+    //             db.query(query, [limit, offset], (err, results) => {
+    //                 if (err) {
+    //                     console.error("Database Query Error:", err);
+    //                     return reject(err);
+    //                 }
+    
+    //                 resolve({ expenses: results, totalPages, totalRecords });
+    //             });
+    //         });
+    //     });
+    // }
+    
+    static async getAllpage(page = 1, limit = 10) {
+        try {
             const offset = (page - 1) * limit;
     
             // Query to get paginated data
@@ -33,27 +72,19 @@ class Expense {
             // Query to get total records
             const countQuery = `SELECT COUNT(*) AS total FROM expense_table`;
     
-            db.query(countQuery, (countErr, countResults) => {
-                if (countErr) {
-                    console.error("Database Count Query Error:", countErr);
-                    return reject(countErr);
-                }
+            // Get total records
+            const [[{ total: totalRecords }]] = await db.promise().query(countQuery);
+            const totalPages = totalRecords > 0 ? Math.ceil(totalRecords / limit) : 0;
     
-                const totalRecords = countResults[0].total;
-                const totalPages = Math.ceil(totalRecords / limit);
+            // Get paginated data
+            const [expenses] = await db.promise().query(query, [limit, offset]);
     
-                db.query(query, [limit, offset], (err, results) => {
-                    if (err) {
-                        console.error("Database Query Error:", err);
-                        return reject(err);
-                    }
-    
-                    resolve({ expenses: results, totalPages, totalRecords });
-                });
-            });
-        });
+            return { expenses, totalPages, totalRecords };
+        } catch (error) {
+            console.error("Database Query Error:", error);
+            throw error;
+        }
     }
-    
     
     
 
