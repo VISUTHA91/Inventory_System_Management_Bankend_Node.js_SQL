@@ -473,45 +473,50 @@ class Invoice {
 //     }
 
 
-//2nd correctly worked code 
 
-// static getInvoiceById(id) {
-//     return new Promise((resolve, reject) => {
+
+
+
+//corrected code2
+
+// static async getInvoiceById(id) {
+//     try {
 //         const invoiceQuery = `
 //             SELECT 
-//                 i.id AS invoice_id,
-//                 i.invoice_number,
-//                 i.customer_id,
-//                 REPLACE(REPLACE(i.quantity, '[', ''), ']', '') AS invoice_quantity,
-//                 i.total_price,
-//                 CAST(JSON_UNQUOTE(i.discount) AS DECIMAL(10,2)) AS discount,
-//                 i.final_price,
-//                 i.invoice_created_at,
-//                 i.invoice_updated_at,
-//                 c.customer_name,
-//                 c.phone,
-//                 c.email,
-//                 c.address,
-//                 CONCAT('[', GROUP_CONCAT(
-//                     CONCAT(
-//                         '{"product_id":', p.id,
-//                         ',"product_name":', JSON_QUOTE(p.product_name),
-//                         ',"product_batch_no":', JSON_QUOTE(p.product_batch_no),
-//                         ',"selling_price":', p.selling_price,
-//                         ',"product_quantity":', 
-//                         JSON_EXTRACT(i.quantity, CONCAT('$[', FIND_IN_SET(p.id, REPLACE(REPLACE(i.product_id, '[', ''), ']', '')) - 1, ']')),
-//                         ',"product_gst":', p.GST,
-//                         ',"product_price":', p.product_price,
-//                         '}'
-//                     )
-//                 ), ']') AS products
-//             FROM invoice_table i
-//             JOIN customer_table c ON i.customer_id = c.customer_id
-//             JOIN product_table p ON FIND_IN_SET(p.id, REPLACE(REPLACE(i.product_id, '[', ''), ']', ''))
-//             WHERE i.id = ?
-//             GROUP BY i.id;
-//         `;
+//     i.id AS invoice_id,
+//     i.invoice_number,
+//     i.customer_id,
+//     REPLACE(REPLACE(i.quantity, '[', ''), ']', '') AS invoice_quantity,
+//     i.total_price,
+//     CAST(JSON_UNQUOTE(i.discount) AS DECIMAL(10,2)) AS discount,
+//     i.final_price,
+//     i.invoice_created_at,
+//     i.invoice_updated_at,
+//     c.customer_name,
+//     c.phone,
+//     c.email,
+//     c.address,
+//     CONCAT('[', GROUP_CONCAT(
+//         JSON_OBJECT(
+//             'product_id', p.id,
+//             'product_name', p.product_name,
+//             'product_batch_no', p.product_batch_no,
+//             'selling_price', p.selling_price,
+//             'product_quantity', 
+//             JSON_UNQUOTE(JSON_EXTRACT(i.quantity, CONCAT('$[', FIND_IN_SET(p.id, REPLACE(REPLACE(i.product_id, '[', ''), ']', '')) - 1, ']'))),
+//             'product_gst', p.GST,
+//             'product_price', p.product_price,
+//             'expiry_date', p.expiry_date,
+//             'MFD', p.MFD
+//         )
+//     ), ']') AS products
+// FROM invoice_table i
+// JOIN customer_table c ON i.customer_id = c.customer_id
+// JOIN product_table p ON FIND_IN_SET(p.id, REPLACE(REPLACE(i.product_id, '[', ''), ']', ''))
+// WHERE i.id = ?
+// GROUP BY i.id;
 
+//         `;
 //         const shopQuery = `
 //             SELECT 
 //                 shop_id,
@@ -526,79 +531,64 @@ class Invoice {
 //         `;
 
 //         // Fetch invoice details
-//         db.query(invoiceQuery, [id], (err, invoiceResults) => {
-//             if (err) {
-//                 return reject({ message: 'Error fetching invoice details.', error: err });
-//             }
+//         const [invoiceResults] = await db.promise().query(invoiceQuery, [id]);
+//         if (invoiceResults.length === 0) {
+//             throw new Error(`Invoice with ID ${id} not found.`);
+//         }
 
-//             if (invoiceResults.length === 0) {
-//                 return reject({ message: `Invoice with ID ${id} not found.` });
-//             }
+//         const invoice = invoiceResults[0];
+//         invoice.products = JSON.parse(invoice.products || '[]');  // Safe parsing
 
-//             const invoice = invoiceResults[0];
-//             invoice.products = JSON.parse(invoice.products || '[]');
+//         // Fetch shop details
+//         const [shopResults] = await db.promise().query(shopQuery, [id]);
+//         const shop = shopResults.length > 0 ? shopResults[0] : null;
 
-//             // Fetch shop details
-//             db.query(shopQuery, [id], (err, shopResults) => {
-//                 if (err) {
-//                     return reject({ message: 'Error fetching shop details.', error: err });
-//                 }
-
-//                 if (shopResults.length === 0) {
-//                     return reject({ message: `Shop details for Invoice ID ${id} not found.` });
-//                 }
-
-//                 const shop = shopResults[0];
-//                 resolve({ ...invoice, shop });
-//             });
-//         });
-//     });
+//         return { ...invoice, shop };
+//     } catch (error) {
+//         throw new Error(error.message || 'Error fetching invoice details.');
+//     }
 // }
 
-
-
-
-
-
-
-static async getInvoiceById(id) {
+static async getInvoiceById(id) { 
     try {
         const invoiceQuery = `
             SELECT 
-    i.id AS invoice_id,
-    i.invoice_number,
-    i.customer_id,
-    REPLACE(REPLACE(i.quantity, '[', ''), ']', '') AS invoice_quantity,
-    i.total_price,
-    CAST(JSON_UNQUOTE(i.discount) AS DECIMAL(10,2)) AS discount,
-    i.final_price,
-    i.invoice_created_at,
-    i.invoice_updated_at,
-    c.customer_name,
-    c.phone,
-    c.email,
-    c.address,
-    CONCAT('[', GROUP_CONCAT(
-        JSON_OBJECT(
-            'product_id', p.id,
-            'product_name', p.product_name,
-            'product_batch_no', p.product_batch_no,
-            'selling_price', p.selling_price,
-            'product_quantity', 
-            JSON_UNQUOTE(JSON_EXTRACT(i.quantity, CONCAT('$[', FIND_IN_SET(p.id, REPLACE(REPLACE(i.product_id, '[', ''), ']', '')) - 1, ']'))),
-            'product_gst', p.GST,
-            'product_price', p.product_price,
-            'expiry_date', p.expiry_date,
-            'MFD', p.MFD
-        )
-    ), ']') AS products
-FROM invoice_table i
-JOIN customer_table c ON i.customer_id = c.customer_id
-JOIN product_table p ON FIND_IN_SET(p.id, REPLACE(REPLACE(i.product_id, '[', ''), ']', ''))
-WHERE i.id = ?
-GROUP BY i.id;
-
+                i.id AS invoice_id,
+                i.invoice_number,
+                i.customer_id,
+                REPLACE(REPLACE(i.quantity, '[', ''), ']', '') AS invoice_quantity,
+                i.total_price,
+                CAST(JSON_UNQUOTE(i.discount) AS DECIMAL(10,2)) AS discount,
+                i.final_price,
+                i.invoice_created_at,
+                i.invoice_updated_at,
+                c.customer_name,
+                c.phone,
+                c.email,
+                c.address,
+                CONCAT('[', GROUP_CONCAT(
+                    JSON_OBJECT(
+                        'product_id', p.id,
+                        'product_name', p.product_name,
+                        'product_batch_no', p.product_batch_no,
+                        'selling_price', p.selling_price,
+                        'product_quantity', 
+                        JSON_UNQUOTE(JSON_EXTRACT(i.quantity, CONCAT('$[', FIND_IN_SET(p.id, REPLACE(REPLACE(i.product_id, '[', ''), ']', '')) - 1, ']'))),
+                        'total_product_price', 
+                        (JSON_UNQUOTE(JSON_EXTRACT(i.quantity, CONCAT('$[', FIND_IN_SET(p.id, REPLACE(REPLACE(i.product_id, '[', ''), ']', '')) - 1, ']'))) * p.selling_price),
+                        'product_gst', p.GST,
+                        'product_price', p.product_price,
+                        'expiry_date', p.expiry_date,
+                        'MFD', p.MFD
+                    )
+                ), ']') AS products
+            FROM invoice_table i
+            JOIN customer_table c ON i.customer_id = c.customer_id
+            JOIN product_table p ON FIND_IN_SET(p.id, REPLACE(REPLACE(i.product_id, '[', ''), ']', ''))
+            WHERE i.id = ?
+            GROUP BY i.id;
         `;
+
         const shopQuery = `
             SELECT 
                 shop_id,

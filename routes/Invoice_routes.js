@@ -16,8 +16,8 @@ router.get('/invoiceall', authMiddleware,adminOrStaff,invoiceController.getAllIn
 
 // Get Invoice by ID
 router.get('/invoicebyid/:id', authMiddleware,adminOrStaff,invoiceController.getInvoiceById);
-
-router.get('/invoicebyid/pdfdownload/:id', authMiddleware,adminOnly,invoiceController.downloadInvoicePdf);
+//size=A4 / Size=A5
+router.get('/invoicebyid/pdfdownload/:id', authMiddleware,adminOnly,invoiceController.downloadInvoicePdf); 
 
 // Update Invoice
 router.put('/invoiceup/:id', authMiddleware,adminOnly,invoiceController.updateInvoice);

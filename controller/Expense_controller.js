@@ -46,6 +46,32 @@ exports.getAllExpenses = async (req, res) => {
 
 
 // Get all expenses with pagination
+// exports.getAllExpensespage = async (req, res) => {
+//     try {
+//         // Get page and limit from query params, set defaults
+//         let { page, limit } = req.query;
+//         page = parseInt(page) || 1;
+//         limit = parseInt(limit) || 10;
+
+//         const { expenses, totalPages, totalRecords } = await Expensedetails.getAllpage(page, limit);
+
+//         if (!Array.isArray(expenses) || expenses.length === 0) {
+//             return res.status(404).json({ success: false, message: "No expenses found" });
+//         }
+
+//         res.status(200).json({
+//             success: true,
+//             currentPage: page,
+//             totalPages,
+//             totalRecords,
+//             data: expenses,
+//         });
+
+//     } catch (err) {
+//         console.error("Database Error:", err);
+//         res.status(500).json({ success: false, message: "Server error", error: err.message });
+//     }
+// };
 exports.getAllExpensespage = async (req, res) => {
     try {
         // Get page and limit from query params, set defaults
@@ -62,6 +88,7 @@ exports.getAllExpensespage = async (req, res) => {
         res.status(200).json({
             success: true,
             currentPage: page,
+            limit, // Include the limit in response
             totalPages,
             totalRecords,
             data: expenses,
