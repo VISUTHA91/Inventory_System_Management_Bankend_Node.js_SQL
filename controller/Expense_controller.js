@@ -13,7 +13,7 @@ exports.createExpense = async (req, res) => {
         const { category, amount, date, description } = req.body;
 
         if (!category || !amount || !date) {
-            return res.status(400).json({ success: false, message: 'Category, amount, and expence_date are required' });
+            return res.status(400).json({ success: false, message: 'Category, amount, and date are required' });
         }
 
         // Format the date before inserting into DB
