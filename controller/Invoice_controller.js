@@ -1,6 +1,7 @@
 const Invoice = require('../model/Invoice_model');
 const Customer = require('../model/Customer_model');
 const db = require('../config/Database'); 
+const { generateCSV, generatePDF ,generateInvoicePDF} = require("../Helper/export_helper");
 
 
 // Generate Invoice Number
@@ -527,234 +528,10 @@ exports.getInvoiceById = async (req, res) => {
 
 
 
-//correct code
 
-// exports.downloadInvoicePdf = async (req, res) => {
-//     try {
-//         const { id } = req.params;
-
-//         if (!id || isNaN(Number(id))) {
-//             return res.status(400).json({ message: "Invalid invoice ID" });
-//         }
-
-//         const invoice = await Invoice.getInvoiceById(id);
-
-//         if (!invoice) {
-//             return res.status(404).json({ message: "Invoice not found" });
-//         }
-
-//         const doc = new PDFDocument();
-
-//         // Attach the PDF response headers
-//         res.setHeader('Content-Type', 'application/pdf');
-//         res.setHeader('Content-Disposition', `attachment; filename=Invoice_${invoice.invoice_number}.pdf`);
-
-//         // Stream the PDF to the response
-//         doc.pipe(res);
-
-//         // Add shop details
-//         doc.fontSize(20).text(invoice.shop.pharmacy_name, { align: 'center', underline: true });
-//         doc.fontSize(12).text(`Address: ${invoice.shop.pharmacy_address}`, { align: 'center' });
-//         doc.text(`GST: ${invoice.shop.owner_GST_number}`, { align: 'center' });
-//         doc.text(`Pincode: ${invoice.shop.pincode}`, { align: 'center' });
-//         doc.moveDown();
-
-//         // Add customer details
-//         doc.fontSize(16).text(`Invoice Number#${invoice.invoice_number}`, { align: 'center', underline: true });
-//         doc.moveDown();
-//         doc.fontSize(12).text(`Customer Name: ${invoice.customer_name}`);
-//         doc.text(`Phone: ${invoice.phone}`);
-//         doc.text(`Email: ${invoice.email}`);
-//         doc.text(`Address: ${invoice.address}`);
-//         doc.moveDown();
-
-//         // Add table header for products
-//         doc.fontSize(14).text('Products:', { underline: true });
-//         doc.moveDown();
-
-//         doc.fontSize(12);
-//         const tableHeader = ['#', 'Product Name', 'Batch No', 'Qty', 'MRP', 'Selling Price', 'GST'];
-//         const tableColumnWidths = [30, 150, 80, 40, 60, 80, 40];
-
-//         // Draw table header
-//         let cursorY = doc.y; // Capture current Y position
-//         doc.text(tableHeader[0], 50, cursorY, { width: tableColumnWidths[0], align: 'center' });
-//         doc.text(tableHeader[1], 80, cursorY, { width: tableColumnWidths[1] });
-//         doc.text(tableHeader[2], 230, cursorY, { width: tableColumnWidths[2], align: 'center' });
-//         doc.text(tableHeader[3], 310, cursorY, { width: tableColumnWidths[3], align: 'center' });
-//         doc.text(tableHeader[4], 360, cursorY, { width: tableColumnWidths[4], align: 'center' });
-//         doc.text(tableHeader[5], 420, cursorY, { width: tableColumnWidths[5], align: 'center' });
-//         doc.text(tableHeader[6], 500, cursorY, { width: tableColumnWidths[6], align: 'center' });
-
-//         // Draw a line below the header
-//         doc.moveTo(50, cursorY + 15).lineTo(550, cursorY + 15).stroke();
-
-//         // Add product rows
-//         invoice.products.forEach((product, index) => {
-//             cursorY += 20;
-//             doc.text(index + 1, 50, cursorY, { width: tableColumnWidths[0], align: 'center' });
-//             doc.text(product.product_name, 80, cursorY, { width: tableColumnWidths[1] });
-//             doc.text(product.product_batch_no, 230, cursorY, { width: tableColumnWidths[2], align: 'center' });
-//             doc.text(invoice.invoice_quantity, 310, cursorY, { width: tableColumnWidths[3], align: 'center' });
-//             doc.text(parseFloat(product.product_price).toFixed(2), 360, cursorY, { width: tableColumnWidths[4], align: 'center' });
-//             doc.text(parseFloat(product.selling_price).toFixed(2), 420, cursorY, { width: tableColumnWidths[5], align: 'center' });
-//             doc.text(parseFloat(product.product_gst).toFixed(2) + '%', 500, cursorY, { width: tableColumnWidths[6], align: 'center' });
-//         });
-
-//         // Add a line below the last product
-//         doc.moveTo(50, cursorY + 15).lineTo(550, cursorY + 15).stroke();
-
-//         // Add invoice summary
-//         doc.moveDown(2);
-//         doc.fontSize(12).text(`Subtotal: ${parseFloat(invoice.total_price).toFixed(2)}`, { align: 'right' });
-//         doc.text(`Discount: ${parseFloat(invoice.discount).toFixed(2)}`, { align: 'right' });
-//         doc.text(`Final Price: ${parseFloat(invoice.final_price).toFixed(2)}`, { align: 'right' });
-
-        
-        
-
-//         // End the document
-//         doc.end();
-//     } catch (error) {
-//         console.error("Error downloading invoice PDF:", error);
-//         res.status(500).json({ message: "Server error", error: error.message });
-//     }
-// };
 
 
 //correct code with all changes
-// const PDFDocument = require('pdfkit');
-
-// exports.downloadInvoicePdf = async (req, res) => {
-//     try {
-//         const { id } = req.params;
-//         const { size } = req.query;
-
-//         if (!id || isNaN(Number(id))) {
-//             return res.status(400).json({ message: "Invalid invoice ID" });
-//         }
-
-//         const invoice = await Invoice.getInvoiceById(id);
-
-//         console.log("invoice details", invoice);
-//         if (!invoice) {
-//             return res.status(404).json({ message: "Invoice not found" });
-//         }
-
-//         const pageSizes = {
-//             A4: { width: 595.28, height: 841.89 },
-//             A5: { width: 419.53, height: 595.28 }
-//         };
-
-//         const selectedSize = pageSizes[size?.toUpperCase()] || pageSizes.A4;
-
-//         const doc = new PDFDocument({ size: [selectedSize.width, selectedSize.height], margin: 30 });
-
-//         res.setHeader('Content-Type', 'application/pdf');
-//         res.setHeader('Content-Disposition', `attachment; filename=Invoice_${invoice.invoice_number}.pdf`);
-
-//         doc.pipe(res);
-
-//         const fontSizeTitle = selectedSize.width === pageSizes.A5.width ? 14 : 18;
-//         const fontSizeText = selectedSize.width === pageSizes.A5.width ? 9 : 12;
-//         const fontSizeTable = selectedSize.width === pageSizes.A5.width ? 8 : 10;
-
-//         doc.fontSize(fontSizeTitle).text(invoice.shop.pharmacy_name, { align: 'center', underline: true });
-//         doc.fontSize(fontSizeText).text(`Address: ${invoice.shop.pharmacy_address}`, { align: 'center' });
-//         doc.text(`GST: ${invoice.shop.owner_GST_number}`, { align: 'center' });
-//         doc.text(`Pincode: ${invoice.shop.pincode}`, { align: 'center' });
-//         doc.moveDown();
-
-//         doc.fontSize(fontSizeText).text(`Invoice Number: ${invoice.invoice_number}`, { align: 'center', underline: true });
-//         doc.moveDown();
-
-//         // Check if customer details are null and replace with '-'
-//         const customerName = invoice.customer_name || "-";
-//         const phone = invoice.phone || "-";
-//         const email = invoice.email || "-";
-//         const address = invoice.address || "-";
-
-//         doc.text(`Customer Name: ${customerName}`);
-//         doc.text(`Phone: ${phone}`);
-//         doc.text(`Email: ${email}`);
-//         doc.text(`Address: ${address}`);
-//         doc.moveDown();
-
-//         doc.fontSize(fontSizeText).text('Products:', { underline: true });
-//         doc.moveDown();
-
-//         const startX = 30;
-//         let cursorY = doc.y;
-
-//         const columnWidths = selectedSize.width === pageSizes.A5.width
-//             ? [20, 100, 50, 50, 40, 50, 50, 50]
-//             : [30, 140, 80, 70, 50, 60, 60, 60];
-
-//         const headers = ['#', 'Product Name', 'Batch', 'Expiry', 'Qty', 'MRP', 'GST%', 'Amount'];
-
-//         // Draw table headers
-//         doc.fontSize(fontSizeTable).fillColor('black').font('Helvetica-Bold');
-//         headers.forEach((header, i) => {
-//             doc.text(header, startX + columnWidths.slice(0, i).reduce((a, b) => a + b, 0), cursorY, {
-//                 width: columnWidths[i], align: 'center'
-//             });
-//         });
-
-//         cursorY += 15;
-//         doc.moveTo(startX, cursorY).lineTo(selectedSize.width - 30, cursorY).stroke();
-//         doc.font('Helvetica');
-
-//         // Draw table data
-//         invoice.products.forEach((product, index) => {
-//             cursorY += 15;
-//             const rowData = [
-//                 index + 1,
-//                 product.product_name,
-//                 product.product_batch_no,
-//                 product.expiry_date,
-//                 String(product.product_quantity || "0"),
-//                 parseFloat(product.product_price).toFixed(2),
-//                 parseFloat(product.product_gst).toFixed(2) + '%',
-//                 // parseFloat(product.selling_price).toFixed(2)
-//                 parseFloat(product.total_product_price).toFixed(2)
-
-//             ];
-
-//             rowData.forEach((text, i) => {
-//                 doc.text(String(text), startX + columnWidths.slice(0, i).reduce((a, b) => a + b, 0), cursorY, {
-//                     width: columnWidths[i], align: 'center'
-//                 });
-//             });
-//         });
-
-//         cursorY += 15;
-//         doc.moveTo(startX, cursorY).lineTo(selectedSize.width - 30, cursorY).stroke();
-//         cursorY += 10;
-
-//         // Final summary section
-//         doc.moveDown();
-//         doc.fontSize(fontSizeText);
-//         doc.text(`Subtotal: ${parseFloat(invoice.total_price).toFixed(2)}`, selectedSize.width - 130, cursorY, { align: 'right' });
-
-//         const discount = isNaN(invoice.discount) ? 0 : parseFloat(invoice.discount).toFixed(2);
-//         doc.text(`Discount: ${discount}`, selectedSize.width - 130, cursorY + 15, { align: 'right' });
-
-//         doc.fontSize(fontSizeTitle).text(`Final Price: ${parseFloat(invoice.final_price).toFixed(2)}`, selectedSize.width - 130, cursorY + 30, { align: 'right', bold: true });
-
-//         doc.moveDown();
-        
-//         doc.fontSize(fontSizeText).fillColor('red')
-//         .text("Sales Return against Bill and less than 30 days only", selectedSize.width - 300, doc.y + 20, { align: 'center', width: 270 });
-
-//         doc.end();
-//     } catch (error) {
-//         console.error("Error downloading invoice PDF:", error);
-//         res.status(500).json({ message: "Server error", error: error.message });
-//     }
-// };
-
-
-//date correction
 const PDFDocument = require('pdfkit');
 
 exports.downloadInvoicePdf = async (req, res) => {
@@ -768,12 +545,11 @@ exports.downloadInvoicePdf = async (req, res) => {
 
         const invoice = await Invoice.getInvoiceById(id);
 
-        console.log("Invoice Details:", invoice);
+        console.log("invoice details", invoice);
         if (!invoice) {
             return res.status(404).json({ message: "Invoice not found" });
         }
 
-        // Define page sizes
         const pageSizes = {
             A4: { width: 595.28, height: 841.89 },
             A5: { width: 419.53, height: 595.28 }
@@ -788,24 +564,20 @@ exports.downloadInvoicePdf = async (req, res) => {
 
         doc.pipe(res);
 
-        const fontSizeTitle = selectedSize.width === pageSizes.A5.width ? 12 : 16;
-        const fontSizeText = selectedSize.width === pageSizes.A5.width ? 8 : 11;
-        const fontSizeTable = selectedSize.width === pageSizes.A5.width ? 7 : 9;
+        const fontSizeTitle = selectedSize.width === pageSizes.A5.width ? 14 : 18;
+        const fontSizeText = selectedSize.width === pageSizes.A5.width ? 9 : 12;
+        const fontSizeTable = selectedSize.width === pageSizes.A5.width ? 8 : 10;
 
-        // Add Shop Details
         doc.fontSize(fontSizeTitle).text(invoice.shop.pharmacy_name, { align: 'center', underline: true });
         doc.fontSize(fontSizeText).text(`Address: ${invoice.shop.pharmacy_address}`, { align: 'center' });
         doc.text(`GST: ${invoice.shop.owner_GST_number}`, { align: 'center' });
         doc.text(`Pincode: ${invoice.shop.pincode}`, { align: 'center' });
         doc.moveDown();
 
-        // Add Invoice Details
-        const invoiceDate = new Date(invoice.invoice_created_at).toLocaleString();
         doc.fontSize(fontSizeText).text(`Invoice Number: ${invoice.invoice_number}`, { align: 'center', underline: true });
-        doc.text(`Invoice Date: ${invoiceDate}`, { align: 'center' });
         doc.moveDown();
 
-        // Customer Details
+        // Check if customer details are null and replace with '-'
         const customerName = invoice.customer_name || "-";
         const phone = invoice.phone || "-";
         const email = invoice.email || "-";
@@ -817,7 +589,6 @@ exports.downloadInvoicePdf = async (req, res) => {
         doc.text(`Address: ${address}`);
         doc.moveDown();
 
-        // Table Header
         doc.fontSize(fontSizeText).text('Products:', { underline: true });
         doc.moveDown();
 
@@ -825,12 +596,12 @@ exports.downloadInvoicePdf = async (req, res) => {
         let cursorY = doc.y;
 
         const columnWidths = selectedSize.width === pageSizes.A5.width
-            ? [20, 80, 40, 40, 30, 40, 40, 50] // Adjusted for A5
-            : [30, 120, 70, 60, 50, 60, 60, 70]; // A4 size
+            ? [20, 100, 50, 50, 40, 50, 50, 50]
+            : [30, 140, 80, 70, 50, 60, 60, 60];
 
         const headers = ['#', 'Product Name', 'Batch', 'Expiry', 'Qty', 'MRP', 'GST%', 'Amount'];
 
-        // Draw Table Headers
+        // Draw table headers
         doc.fontSize(fontSizeTable).fillColor('black').font('Helvetica-Bold');
         headers.forEach((header, i) => {
             doc.text(header, startX + columnWidths.slice(0, i).reduce((a, b) => a + b, 0), cursorY, {
@@ -838,13 +609,13 @@ exports.downloadInvoicePdf = async (req, res) => {
             });
         });
 
-        cursorY += 12;
+        cursorY += 15;
         doc.moveTo(startX, cursorY).lineTo(selectedSize.width - 30, cursorY).stroke();
         doc.font('Helvetica');
 
-        // Draw Table Data
+        // Draw table data
         invoice.products.forEach((product, index) => {
-            cursorY += 12;
+            cursorY += 15;
             const rowData = [
                 index + 1,
                 product.product_name,
@@ -853,7 +624,9 @@ exports.downloadInvoicePdf = async (req, res) => {
                 String(product.product_quantity || "0"),
                 parseFloat(product.product_price).toFixed(2),
                 parseFloat(product.product_gst).toFixed(2) + '%',
+                // parseFloat(product.selling_price).toFixed(2)
                 parseFloat(product.total_product_price).toFixed(2)
+
             ];
 
             rowData.forEach((text, i) => {
@@ -863,28 +636,24 @@ exports.downloadInvoicePdf = async (req, res) => {
             });
         });
 
-        cursorY += 12;
+        cursorY += 15;
         doc.moveTo(startX, cursorY).lineTo(selectedSize.width - 30, cursorY).stroke();
         cursorY += 10;
 
-        // Summary Section
+        // Final summary section
         doc.moveDown();
         doc.fontSize(fontSizeText);
-        doc.text(`Subtotal: ₹${parseFloat(invoice.total_price).toFixed(2)}`, selectedSize.width - 130, cursorY, { align: 'right' });
+        doc.text(`Subtotal: ${parseFloat(invoice.total_price).toFixed(2)}`, selectedSize.width - 130, cursorY, { align: 'right' });
 
         const discount = isNaN(invoice.discount) ? 0 : parseFloat(invoice.discount).toFixed(2);
-        doc.text(`Discount: ₹${discount}`, selectedSize.width - 130, cursorY + 12, { align: 'right' });
+        doc.text(`Discount: ${discount}`, selectedSize.width - 130, cursorY + 15, { align: 'right' });
 
-        doc.fontSize(fontSizeTitle).text(`Final Price: ₹${parseFloat(invoice.final_price).toFixed(2)}`, selectedSize.width - 130, cursorY + 24, { align: 'right', bold: true });
+        doc.fontSize(fontSizeTitle).text(`Final Price: ${parseFloat(invoice.final_price).toFixed(2)}`, selectedSize.width - 130, cursorY + 30, { align: 'right', bold: true });
 
         doc.moveDown();
-
-        // Sales Return Message (Centered)
+        
         doc.fontSize(fontSizeText).fillColor('red')
-            .text("Sales Return against Bill and less than 30 days only", {
-                align: 'center',
-                width: selectedSize.width - 60 // Adjusted for proper centering
-            });
+        .text("Sales Return against Bill and less than 30 days only", selectedSize.width - 300, doc.y + 20, { align: 'center', width: 270 });
 
         doc.end();
     } catch (error) {
@@ -894,8 +663,172 @@ exports.downloadInvoicePdf = async (req, res) => {
 };
 
 
+//date correction
+// const PDFDocument = require('pdfkit');
+
+// exports.downloadInvoicePdf = async (req, res) => {
+//     try {
+//         const { id } = req.params;
+//         const { size } = req.query;
+
+//         if (!id || isNaN(Number(id))) {
+//             return res.status(400).json({ message: "Invalid invoice ID" });
+//         }
+
+//         const invoice = await Invoice.getInvoiceById(id);
+
+//         console.log("Invoice Details:", invoice);
+//         if (!invoice) {
+//             return res.status(404).json({ message: "Invoice not found" });
+//         }
+
+//         // Define page sizes
+//         const pageSizes = {
+//             A4: { width: 595.28, height: 841.89 },
+//             A5: { width: 419.53, height: 595.28 }
+//         };
+
+//         const selectedSize = pageSizes[size?.toUpperCase()] || pageSizes.A4;
+
+//         const doc = new PDFDocument({ size: [selectedSize.width, selectedSize.height], margin: 30 });
+
+//         res.setHeader('Content-Type', 'application/pdf');
+//         res.setHeader('Content-Disposition', `attachment; filename=Invoice_${invoice.invoice_number}.pdf`);
+
+//         doc.pipe(res);
+
+//         const fontSizeTitle = selectedSize.width === pageSizes.A5.width ? 12 : 16;
+//         const fontSizeText = selectedSize.width === pageSizes.A5.width ? 8 : 11;
+//         const fontSizeTable = selectedSize.width === pageSizes.A5.width ? 7 : 9;
+
+//         // Add Shop Details
+//         doc.fontSize(fontSizeTitle).text(invoice.shop.pharmacy_name, { align: 'center', underline: true });
+//         doc.fontSize(fontSizeText).text(`Address: ${invoice.shop.pharmacy_address}`, { align: 'center' });
+//         doc.text(`GST: ${invoice.shop.owner_GST_number}`, { align: 'center' });
+//         doc.text(`Pincode: ${invoice.shop.pincode}`, { align: 'center' });
+//         doc.moveDown();
+
+//         // Add Invoice Details
+//         const invoiceDate = new Date(invoice.invoice_created_at).toLocaleString();
+//         doc.fontSize(fontSizeText).text(`Invoice Number: ${invoice.invoice_number}`, { align: 'center', underline: true });
+//         doc.text(`Invoice Date: ${invoiceDate}`, { align: 'center' });
+//         doc.moveDown();
+
+//         // Customer Details
+//         const customerName = invoice.customer_name || "-";
+//         const phone = invoice.phone || "-";
+//         const email = invoice.email || "-";
+//         const address = invoice.address || "-";
+
+//         doc.text(`Customer Name: ${customerName}`);
+//         doc.text(`Phone: ${phone}`);
+//         doc.text(`Email: ${email}`);
+//         doc.text(`Address: ${address}`);
+//         doc.moveDown();
+
+//         // Table Header
+//         doc.fontSize(fontSizeText).text('Products:', { underline: true });
+//         doc.moveDown();
+
+//         const startX = 30;
+//         let cursorY = doc.y;
+
+//         const columnWidths = selectedSize.width === pageSizes.A5.width
+//             ? [20, 80, 40, 40, 30, 40, 40, 50] // Adjusted for A5
+//             : [30, 120, 70, 60, 50, 60, 60, 70]; // A4 size
+
+//         const headers = ['#', 'Product Name', 'Batch', 'Expiry', 'Qty', 'MRP', 'GST%', 'Amount'];
+
+//         // Draw Table Headers
+//         doc.fontSize(fontSizeTable).fillColor('black').font('Helvetica-Bold');
+//         headers.forEach((header, i) => {
+//             doc.text(header, startX + columnWidths.slice(0, i).reduce((a, b) => a + b, 0), cursorY, {
+//                 width: columnWidths[i], align: 'center'
+//             });
+//         });
+
+//         cursorY += 12;
+//         doc.moveTo(startX, cursorY).lineTo(selectedSize.width - 30, cursorY).stroke();
+//         doc.font('Helvetica');
+
+//         // Draw Table Data
+//         invoice.products.forEach((product, index) => {
+//             cursorY += 12;
+//             const rowData = [
+//                 index + 1,
+//                 product.product_name,
+//                 product.product_batch_no,
+//                 product.expiry_date,
+//                 String(product.product_quantity || "0"),
+//                 parseFloat(product.product_price).toFixed(2),
+//                 parseFloat(product.product_gst).toFixed(2) + '%',
+//                 parseFloat(product.total_product_price).toFixed(2)
+//             ];
+
+//             rowData.forEach((text, i) => {
+//                 doc.text(String(text), startX + columnWidths.slice(0, i).reduce((a, b) => a + b, 0), cursorY, {
+//                     width: columnWidths[i], align: 'center'
+//                 });
+//             });
+//         });
+
+//         cursorY += 12;
+//         doc.moveTo(startX, cursorY).lineTo(selectedSize.width - 30, cursorY).stroke();
+//         cursorY += 10;
+
+//         // Summary Section
+//         doc.moveDown();
+//         doc.fontSize(fontSizeText);
+//         doc.text(`Subtotal: ₹${parseFloat(invoice.total_price).toFixed(2)}`, selectedSize.width - 130, cursorY, { align: 'right' });
+
+//         const discount = isNaN(invoice.discount) ? 0 : parseFloat(invoice.discount).toFixed(2);
+//         doc.text(`Discount: ₹${discount}`, selectedSize.width - 130, cursorY + 12, { align: 'right' });
+
+//         doc.fontSize(fontSizeTitle).text(`Final Price: ₹${parseFloat(invoice.final_price).toFixed(2)}`, selectedSize.width - 130, cursorY + 24, { align: 'right', bold: true });
+
+//         doc.moveDown();
+
+//         // Sales Return Message (Centered)
+//         doc.fontSize(fontSizeText).fillColor('red')
+//             .text("Sales Return against Bill and less than 30 days only", {
+//                 align: 'center',
+//                 width: selectedSize.width - 60 // Adjusted for proper centering
+//             });
+
+//         doc.end();
+//     } catch (error) {
+//         console.error("Error downloading invoice PDF:", error);
+//         res.status(500).json({ message: "Server error", error: error.message });
+//     }
+// };
 
 
+
+
+exports.generateInvoicePDF= async(req, res)=> {
+    try {
+        const { id } = req.params;
+        const invoice = await Invoice.getInvoiceById(id);
+
+        if (!invoice) {
+            return res.status(404).json({ message: "Invoice not found" });
+        }
+
+        const pdfBuffer = await generateInvoicePDF(invoice);
+
+        // res.setHeader('Content-Disposition', `attachment; filename=Invoice_${invoice.invoice_number}.pdf`);
+        // res.setHeader('Content-Type', 'application/pdf');
+        // res.send(pdfBuffer);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'inline; filename="invoice.pdf"');
+        res.end(pdfBuffer);
+        
+
+    } catch (error) {
+        console.error("Error generating PDF:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+}
 
 
 
@@ -926,7 +859,7 @@ exports.deleteInvoice = async (req, res) => {
 
 
 
-const { generateCSV, generatePDF } = require("../Helper/export_helper");
+
 //correct code of pdf and csv
 // exports.getInvoiceListController = async (req, res) => {
 //     try {

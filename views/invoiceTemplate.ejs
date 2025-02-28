@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .invoice-box { max-width: 800px; margin: auto; padding: 30px; border: 1px solid #eee; }
+        table { width: 100%; border-collapse: collapse; }
+        table th, table td { border: 1px solid #ddd; padding: 8px; }
+    </style>
+</head>
+<body>
+    <div class="invoice-box">
+        <h2>Invoice #<%= invoice.invoice_number %></h2>
+        <p><strong>Customer:</strong> <%= invoice.customer_name %> | <%= invoice.phone %></p>
+        <p><strong>Date:</strong> <%= invoice.invoice_created_at %></p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% invoice.products.forEach(product => { %>
+                <tr>
+                    <td><%= product.product_name %></td>
+                    <td><%= product.product_quantity %></td>
+                    <td>₹<%= product.selling_price %></td>
+                    <td>₹<%= product.total_product_price %></td>
+                </tr>
+                <% }) %>
+            </tbody>
+        </table>
+        <h3>Total: ₹<%= invoice.final_price %></h3>
+    </div>
+</body>
+</html>

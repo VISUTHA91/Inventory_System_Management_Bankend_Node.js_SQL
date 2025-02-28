@@ -16,8 +16,12 @@ router.get('/invoiceall', authMiddleware,adminOrStaff,invoiceController.getAllIn
 
 // Get Invoice by ID
 router.get('/invoicebyid/:id', authMiddleware,adminOrStaff,invoiceController.getInvoiceById);
-//size=A4 / Size=A5
+// size=A4 / Size=A5 - correctly worked - pdf
 router.get('/invoicebyid/pdfdownload/:id', authMiddleware,adminOnly,invoiceController.downloadInvoicePdf); 
+
+//html&css working
+router.get('/invoice/:id/pdf', invoiceController.generateInvoicePDF);
+
 
 // Update Invoice
 router.put('/invoiceup/:id', authMiddleware,adminOnly,invoiceController.updateInvoice);
@@ -35,10 +39,7 @@ router.get('/most_sold_details',authMiddleware,adminOnly,invoiceController.getAl
 
 router.get('/pagination_sales',authMiddleware,adminOnly,invoiceController.getAllSoldProductsControllerpage);
 
-// // 🔹 Invoice List (JSON, CSV, PDF)
-// router.get("/report_Gen", invoiceController.getInvoiceListController);
-// // 🔹 Total Sales Summary (JSON)
-// router.get("/total-sales", invoiceController.getTotalSalesController);
+
 
 //changes
 
