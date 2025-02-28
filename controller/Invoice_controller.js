@@ -715,7 +715,9 @@ exports.downloadInvoicePdf = async (req, res) => {
                 String(product.product_quantity || "0"),
                 parseFloat(product.product_price).toFixed(2),
                 parseFloat(product.product_gst).toFixed(2) + '%',
-                parseFloat(product.selling_price).toFixed(2)
+                // parseFloat(product.selling_price).toFixed(2)
+                parseFloat(product.total_product_price).toFixed(2)
+
             ];
 
             rowData.forEach((text, i) => {

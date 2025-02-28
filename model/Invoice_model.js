@@ -574,12 +574,12 @@ static async getInvoiceById(id) {
                         'selling_price', p.selling_price,
                         'product_quantity', 
                         JSON_UNQUOTE(JSON_EXTRACT(i.quantity, CONCAT('$[', FIND_IN_SET(p.id, REPLACE(REPLACE(i.product_id, '[', ''), ']', '')) - 1, ']'))),
-                        'total_product_price', 
-                        (JSON_UNQUOTE(JSON_EXTRACT(i.quantity, CONCAT('$[', FIND_IN_SET(p.id, REPLACE(REPLACE(i.product_id, '[', ''), ']', '')) - 1, ']'))) * p.selling_price),
                         'product_gst', p.GST,
                         'product_price', p.product_price,
                         'expiry_date', p.expiry_date,
-                        'MFD', p.MFD
+                        'MFD', p.MFD,
+                        'total_product_price', 
+                        JSON_UNQUOTE(JSON_EXTRACT(i.quantity, CONCAT('$[', FIND_IN_SET(p.id, REPLACE(REPLACE(i.product_id, '[', ''), ']', '')) - 1, ']'))) * p.selling_price
                     )
                 ), ']') AS products
             FROM invoice_table i
@@ -620,6 +620,7 @@ static async getInvoiceById(id) {
         throw new Error(error.message || 'Error fetching invoice details.');
     }
 }
+
 
 
 
