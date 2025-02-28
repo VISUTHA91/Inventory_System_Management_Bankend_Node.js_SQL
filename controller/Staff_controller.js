@@ -324,29 +324,55 @@ login: async (req, res) => {
   //   });
   // },
 
-  getAllStaffUsers: (req, res) => {
-    if (req.user.role !== 'admin') {
-        return res.status(403).json({ status: false, message: 'Access denied: Admins only' });
-    }
+//   getAllStaffUsers: (req, res) => {
+//     if (req.user.role !== 'admin') {
+//         return res.status(403).json({ status: false, message: 'Access denied: Admins only' });
+//     }
 
-    const page = parseInt(req.query.page) || 1; // Default to page 1
-    const limit = parseInt(req.query.limit) || 10; // Default limit 10 per page
+//     const page = parseInt(req.query.page) || 1; // Default to page 1
+//     const limit = parseInt(req.query.limit) || 10; // Default limit 10 per page
 
-    User.getAllStaff(page, limit, (err, results) => {
-        if (err) {
-            return res.status(500).json({ status: false, message: "Database query error", error: err });
-        }
+//     User.getAllStaff(page, limit, (err, results) => {
+//         if (err) {
+//             return res.status(500).json({ status: false, message: "Database query error", error: err });
+//         }
 
-        return res.status(200).json({
-            status: true,
-            message: "Staff users retrieved successfully",
-            page: page,
-            limit: limit,
-            users: results,
-        });
-    });
-}
-,
+//         return res.status(200).json({
+//             status: true,
+//             message: "Staff users retrieved successfully",
+//             page: page,
+//             limit: limit,
+//             users: results,
+//         });
+//     });
+// }
+
+
+getAllStaffUsers: (req, res) => { 
+  if (req.user.role !== 'admin') {
+      return res.status(403).json({ status: false, message: 'Access denied: Admins only' });
+  }
+
+  const page = parseInt(req.query.page) || 1; // Default to page 1
+  const limit = parseInt(req.query.limit) || 10; // Default limit 10 per page
+
+  User.getAllStaff(page, limit, (err, result) => {
+      if (err) {
+          return res.status(500).json({ status: false, message: "Database query error", error: err });
+      }
+
+      return res.status(200).json({
+          status: true,
+          message: "Staff users retrieved successfully",
+          currentPage: page,
+          limit: limit,
+          totalPages: result.totalPages,
+          totalRecords: result.totalRecords,
+          users: result.users,
+      });
+  });
+},
+
  
  
  

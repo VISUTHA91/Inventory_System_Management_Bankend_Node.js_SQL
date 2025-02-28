@@ -21,18 +21,51 @@ const User = {
 
     // Fetch all users without showing password
   
-    getAllStaff: (page, limit, callback) => {
-      const offset = (page - 1) * limit; // Calculate offset
+  //   getAllStaff: (page, limit, callback) => {
+  //     const offset = (page - 1) * limit; // Calculate offset
   
-      const query = `
-          SELECT id, username, email, role, contact_number, address_details, user_id_proof
-          FROM users
-          WHERE role = 'staff'
-          LIMIT ? OFFSET ?`; // Apply LIMIT and OFFSET
+  //     const query = `
+  //         SELECT id, username, email, role, contact_number, address_details, user_id_proof
+  //         FROM users
+  //         WHERE role = 'staff'
+  //         LIMIT ? OFFSET ?`; // Apply LIMIT and OFFSET
   
-      db.query(query, [limit, offset], callback);
-  },
+  //     db.query(query, [limit, offset], callback);
+  // },
   
+  getAllStaff: (page, limit, callback) => {
+    const offset = (page - 1) * limit; // Calculate offset
+
+    // Query to get paginated staff users
+    const query = `
+        SELECT id, username, email, role, contact_number, address_details, user_id_proof
+        FROM users
+        WHERE role = 'staff'
+        LIMIT ? OFFSET ?`;
+
+    // Query to get total count of staff users
+    const countQuery = `SELECT COUNT(*) AS total FROM users WHERE role = 'staff'`;
+
+    // Execute both queries
+    db.query(countQuery, (countErr, countResults) => {
+        if (countErr) {
+            return callback(countErr, null);
+        }
+
+        const totalRecords = countResults[0].total;
+        const totalPages = Math.ceil(totalRecords / limit); // Calculate total pages
+
+        db.query(query, [limit, offset], (err, results) => {
+            if (err) {
+                return callback(err, null);
+            }
+
+            // Return paginated data + total pages & records
+            callback(null, { users: results, totalPages, totalRecords });
+        });
+    });
+},
+
   
   
   
