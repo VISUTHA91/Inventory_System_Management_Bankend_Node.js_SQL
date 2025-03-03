@@ -11,7 +11,7 @@ router.post('/return_product', ProductReturnController.returnProduct);
 router.get('/returns/:invoice_id', ProductReturnController.getReturns);
 
 // Get a list of all rejected invoices
-router.get('/rejected_invoices', ProductReturnController.getRejectedInvoices);
+router.get('/getAll_rejectedInvoices', ProductReturnController.getAllReturns);
 
 // Delete a specific product return entry
 router.delete('/delete/:return_id', ProductReturnController.deleteReturn);

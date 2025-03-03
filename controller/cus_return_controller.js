@@ -40,7 +40,16 @@ class ProductReturnController {
     
     
     
-    
+      // Get all returns
+      static async getAllReturns(req, res) {
+        try {
+            const returns = await ProductReturn.getAllReturns();
+            res.status(200).json(returns);
+        } catch (error) {
+            console.error('Error retrieving returns:', error);
+            res.status(500).json({ message: 'Internal Server Error' });
+        }
+    }
     
     
     

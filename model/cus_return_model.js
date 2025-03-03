@@ -15,6 +15,26 @@ class ProductReturn {
             });
         });
     }
+
+
+    // Get all product returns
+    static getAllReturns() {
+        return new Promise((resolve, reject) => {
+            const query = `
+                SELECT pr.*, i.invoice_number, p.product_name 
+                FROM product_return_table pr
+                JOIN invoice_table i ON pr.invoice_id = i.id
+                JOIN product_table p ON pr.product_id = p.id
+            `;
+
+            db.query(query, (err, result) => {
+                if (err) {
+                    return reject(err);
+                }
+                resolve(result);
+            });
+        });
+    }
     
 
 static checkPurchasedQuantity(invoice_id, product_id) {
@@ -96,7 +116,7 @@ static getReturnsByInvoice(invoice_id) {
   // Fetch Rejected Invoices from DB
   static getAllRejectedInvoices() {
     return new Promise((resolve, reject) => {
-        const query = `SELECT i.*, c.customer_name, c.customer_email 
+        const query = `SELECT i.*, c.customer_name 
                        FROM invoice_table i
                        JOIN customer_table c ON i.customer_id = c.id
                        WHERE i.status = 'rejected'`;

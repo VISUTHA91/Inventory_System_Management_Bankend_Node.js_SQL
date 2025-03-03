@@ -280,6 +280,7 @@ exports.createInvoice = async (req, res) => {
         let totalPrice = 0;
         let totalGST = 0;
         let totalDiscount = 0;
+        const lowStockAlerts = []; // Store low stock alerts
         const detailedProducts = [];
 
         // ✅ Validate products array
@@ -290,6 +291,11 @@ exports.createInvoice = async (req, res) => {
         for (const item of products) {
             if (!item.product_id || isNaN(item.product_id) || !item.quantity || isNaN(item.quantity) || item.quantity <= 0) {
                 return res.status(400).json({ message: 'Invalid product details. Product ID and quantity must be valid numbers greater than 0.' });
+            }
+            //Check updated stock and trigger low stock alert
+            const updatedProduct = await Invoice.checkProductExists(item.product_id);
+            if (updatedProduct.product_quantity < 30) {
+                lowStockAlerts.push(`⚠️ Low stock alert: ${updatedProduct.product_name} (Remaining: ${updatedProduct.product_quantity})`);
             }
 
             const productDetails = await Invoice.checkProductExists(item.product_id);
@@ -350,6 +356,7 @@ exports.createInvoice = async (req, res) => {
 
             res.status(201).json({
                 message: 'Invoice created successfully',
+                low_stock_alerts: lowStockAlerts,  // ✅ Add this line
                 invoice_details: {
                     invoice_id: invoice.invoice_id,
                     invoice_number: invoice.invoice_number,
