@@ -35,6 +35,24 @@ class Invoice {
     }
 
 
+    static getTotalInvoiceAmount() {
+        return new Promise((resolve, reject) => {
+            const query = `SELECT COALESCE(SUM(final_price), 0) AS totalFinalPrice FROM invoice_table`;
+    
+            db.query(query, (err, results) => {
+                if (err) return reject(err);
+    
+                // Ensure totalFinalPrice is always a number
+                const totalFinalPrice = results[0]?.totalFinalPrice || 0;
+    
+                resolve(Number(totalFinalPrice).toFixed(2));
+            });
+        });
+    }
+    
+    
+
+
     // static async checkCustomerExists(customerId) {
     //     // Use 'customer_id' in the query, not 'id'
     //     const query = 'SELECT customer_id FROM customer_table WHERE customer_id = ?';

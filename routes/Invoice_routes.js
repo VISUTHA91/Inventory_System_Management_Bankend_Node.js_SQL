@@ -23,6 +23,10 @@ router.get('/invoicebyid/pdfdownload/:id', authMiddleware,adminOnly,invoiceContr
 router.get('/invoice/:id/pdf', invoiceController.generateInvoicePDF);
 
 
+// New route to get total invoice amount
+router.get('/invoice_total_amount', invoiceController.getTotalInvoiceAmount);
+
+
 // Update Invoice
 router.put('/invoiceup/:id', authMiddleware,adminOnly,invoiceController.updateInvoice);
 

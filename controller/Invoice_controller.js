@@ -378,6 +378,26 @@ exports.createInvoice = async (req, res) => {
 
 
 
+exports.getTotalInvoiceAmount = async (req, res) => {
+    try {
+        // Get total final_price from the database
+        const totalFinalPrice = await Invoice.getTotalInvoiceAmount();
+
+        res.status(200).json({
+            success: true,
+            message: 'Total invoice amount fetched successfully',
+            totalFinalPrice
+        });
+    } catch (error) {
+        console.error('Error fetching total invoice amount:', error);
+
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch total invoice amount',
+            error: error.message
+        });
+    }
+};
 
 
 
