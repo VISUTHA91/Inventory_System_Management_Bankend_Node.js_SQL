@@ -50,6 +50,20 @@ class Invoice {
         });
     }
     
+     // Fetch total unique customers who made purchases
+     static fetchTotalCustomers() {
+        return new Promise((resolve, reject) => {
+            const query = `SELECT COUNT(DISTINCT customer_id) AS total_customers FROM invoice_table;`;
+
+            db.query(query, (err, result) => {
+                if (err) {
+                    console.error('Database error:', err);
+                    return reject(new Error('Error fetching total customers from the database'));
+                }
+                resolve(result[0].total_customers);
+            });
+        });
+    }
     
 
 
@@ -234,6 +248,10 @@ class Invoice {
             });
         });
     }
+
+
+
+
     
 
 

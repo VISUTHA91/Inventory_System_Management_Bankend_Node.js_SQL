@@ -26,6 +26,9 @@ router.get('/invoice/:id/pdf', invoiceController.generateInvoicePDF);
 // New route to get total invoice amount
 router.get('/invoice_total_amount', invoiceController.getTotalInvoiceAmount);
 
+// Route to fetch total unique customer count
+router.get('/customers/count', invoiceController.getTotalCustomers);
+
 
 // Update Invoice
 router.put('/invoiceup/:id', authMiddleware,adminOnly,invoiceController.updateInvoice);

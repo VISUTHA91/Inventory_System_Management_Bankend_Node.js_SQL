@@ -400,6 +400,24 @@ exports.getTotalInvoiceAmount = async (req, res) => {
 };
 
 
+    // Get total unique customer count from invoices
+    exports. getTotalCustomers=async(req, res) => {
+        Invoice.fetchTotalCustomers()
+            .then(total => {
+                res.status(200).json({
+                    message: 'Total unique customer count fetched successfully',
+                    total_customers: total
+                });
+            })
+            .catch(err => {
+                console.error('Error fetching total customers:', err);
+                res.status(500).json({
+                    message: 'Error fetching total customers',
+                    error: err.message
+                });
+            });
+    }
+
 
 
 
