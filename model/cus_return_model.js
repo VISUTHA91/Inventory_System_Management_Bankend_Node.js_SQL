@@ -17,25 +17,75 @@ class ProductReturn {
     }
 
 
-    // Get all product returns
-    static getAllReturns() {
-        return new Promise((resolve, reject) => {
-            const query = `
-                SELECT pr.*, i.invoice_number, p.product_name 
-                FROM product_return_table pr
-                JOIN invoice_table i ON pr.invoice_id = i.id
-                JOIN product_table p ON pr.product_id = p.id
-            `;
+   // Get all product returns
+// static getAllReturns() {
+//     return new Promise((resolve, reject) => {
+//         const query = `
+//             SELECT pr.*, COALESCE(i.invoice_number, 'N/A') AS invoice_number, COALESCE(p.product_name, 'Unknown') AS product_name
+//             FROM product_return_table pr
+//             LEFT JOIN invoice_table i ON pr.invoice_id = i.id
+//             LEFT JOIN product_table p ON pr.product_id = p.id
+//         `;
 
-            db.query(query, (err, result) => {
-                if (err) {
-                    return reject(err);
+//         db.query(query, (err, result) => {
+//             if (err) {
+//                 return reject(err);
+//             }
+//             resolve(result);
+//         });
+//     });
+// }
+
+// Get paginated product returns
+static getAllReturns(page = 1, limit = 5) {
+    return new Promise((resolve, reject) => {
+        const offset = (page - 1) * limit; // Calculate offset for pagination
+
+        // Query to count total records
+        const countQuery = `SELECT COUNT(*) AS totalRecords FROM product_return_table`;
+
+        // Query to fetch paginated results
+        const dataQuery = `
+            SELECT pr.*, 
+                   COALESCE(i.invoice_number, 'N/A') AS invoice_number, 
+                   COALESCE(p.product_name, 'Unknown') AS product_name
+            FROM product_return_table pr
+            LEFT JOIN invoice_table i ON pr.invoice_id = i.id
+            LEFT JOIN product_table p ON pr.product_id = p.id
+            ORDER BY pr.return_date DESC
+            LIMIT ? OFFSET ?
+        `;
+
+        // Execute count query first
+        db.query(countQuery, (countErr, countResult) => {
+            if (countErr) {
+                return reject(countErr);
+            }
+
+            const totalRecords = countResult[0].totalRecords;
+            const totalPages = Math.ceil(totalRecords / limit);
+
+            // Execute data query
+            db.query(dataQuery, [limit, offset], (dataErr, dataResult) => {
+                if (dataErr) {
+                    return reject(dataErr);
                 }
-                resolve(result);
+
+                resolve({
+                    success: true,
+                    currentPage: page,
+                    limit,
+                    totalPages,
+                    totalRecords,
+                    data: dataResult,
+                });
             });
         });
-    }
-    
+    });
+}
+
+
+
 
 static checkPurchasedQuantity(invoice_id, product_id) {
     return new Promise((resolve, reject) => {
