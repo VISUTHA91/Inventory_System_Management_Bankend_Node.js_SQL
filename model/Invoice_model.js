@@ -34,6 +34,120 @@ class Invoice {
         });
     }
 
+    static async getInvoiceDetails(invoice_number) {
+        try {
+            const [rows] = await db.promise().query(
+                `SELECT                 
+        i.id AS invoice_id, 
+        i.invoice_number, 
+        i.invoice_created_at AS invoice_date, 
+        c.customer_id, 
+        COALESCE(c.customer_name, 'Unknown') AS customer_name, 
+        c.phone, 
+        p.id AS product_id, 
+        p.product_name, 
+        p.product_price,
+        jp.product_id AS product_id_extracted, 
+        COALESCE(jq.quantity, '-') AS quantity_extracted,
+        pr.return_id, 
+        COALESCE(pr.quantity, '-') AS returned_quantity, 
+        COALESCE(pr.return_reason, '-') AS return_reason
+    FROM invoice_table i
+    LEFT JOIN customer_table c ON i.customer_id = c.customer_id
+    LEFT JOIN (
+        SELECT id AS invoice_id, 
+               JSON_UNQUOTE(JSON_EXTRACT(product_id, CONCAT('$[', n.n, ']'))) AS product_id, 
+               n.n AS json_index
+        FROM invoice_table
+        JOIN (SELECT 0 AS n UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 
+              UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9) n
+        ON JSON_UNQUOTE(JSON_EXTRACT(product_id, CONCAT('$[', n.n, ']'))) IS NOT NULL
+    ) jp ON i.id = jp.invoice_id
+    LEFT JOIN (
+        SELECT id AS invoice_id, 
+               JSON_UNQUOTE(JSON_EXTRACT(quantity, CONCAT('$[', n.n, ']'))) AS quantity, 
+               n.n AS json_index
+        FROM invoice_table
+        JOIN (SELECT 0 AS n UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 
+              UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9) n
+        ON JSON_UNQUOTE(JSON_EXTRACT(quantity, CONCAT('$[', n.n, ']'))) IS NOT NULL
+    ) jq ON i.id = jq.invoice_id AND jp.json_index = jq.json_index
+    LEFT JOIN product_table p ON jp.product_id = p.id
+    LEFT JOIN product_return_table pr 
+        ON i.id = pr.invoice_id 
+        AND jp.product_id = pr.product_id
+    WHERE i.invoice_number = ?;
+`,
+                [invoice_number]
+            );
+    
+            console.log("Invoice Query Result:", rows);
+    
+            if (!rows || rows.length === 0) {
+                return { error: "Invoice not found", status: 404 };
+            }
+    
+            return {
+                invoice_id: rows[0].invoice_id,
+                invoice_number: rows[0].invoice_number,
+                invoice_date: rows[0].invoice_date,
+                customer_id: rows[0].customer_id,
+                customer_name: rows[0].customer_name,
+                phone: rows[0].phone,
+                products: rows.map(row => ({
+                    product_id: row.product_id_extracted,  
+                    product_name: row.product_name,
+                    product_price: row.product_price,
+                    quantity: row.quantity_extracted !== null ? row.quantity_extracted : '-',
+                    return_id: row.return_id,
+                    returned_quantity: row.returned_quantity !== null ? row.returned_quantity : '-',
+                    return_reason: row.return_reason !== null ? row.return_reason : '-'
+                }))
+            };
+        } catch (error) {
+            console.error("Error fetching invoice details:", error);
+            return { error: "Database error", status: 500 };
+        }
+    }
+    
+  
+    static async getCustomerById(customer_id) {
+        try {
+            const query = "SELECT customer_name, phone FROM customer_table WHERE customer_id = ?";
+            const [rows] = await db.promise().query(query, [customer_id]);
+            return rows.length ? rows[0] : null;
+        } catch (error) {
+            throw error;
+        }
+    }
+    
+
+    static async getInvoiceProducts(invoice_number) {
+        const query = `
+            SELECT p.id, p.product_name, ip.quantity, p.product_price 
+            FROM invoice_table ip
+            JOIN product_table p ON ip.id = p.id
+            WHERE ip.invoice_number = ?`;
+        return db.promise().query(query, [invoice_number]).then(([rows]) => rows);
+    }
+
+    static async getReturnedProducts(invoice_id) {
+        const query = ` SELECT             
+            pr.return_id, 
+            p.product_name, 
+            pr.quantity, 
+            pr.return_reason, 
+            pr.return_date 
+        FROM product_return_table pr
+        JOIN product_table p ON pr.product_id = p.id  -- ✅ Use Correct Column Name
+        WHERE pr.invoice_id = ?`;
+        return db.promise().query(query, [invoice_id]).then(([rows]) => rows);
+    }
+    
+ 
+
+
+
 
     static getTotalInvoiceAmount() {
         return new Promise((resolve, reject) => {
@@ -67,12 +181,7 @@ class Invoice {
     
 
 
-    // static async checkCustomerExists(customerId) {
-    //     // Use 'customer_id' in the query, not 'id'
-    //     const query = 'SELECT customer_id FROM customer_table WHERE customer_id = ?';
-    //     const [results] = await db.promise().query(query, [phone]);
-    //     return results.length > 0; // returns true if the customer exists
-    // };
+  
     static async checkCustomerExists(phone) {
         try {
             const [rows] = await db.promise().query(

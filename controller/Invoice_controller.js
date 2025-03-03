@@ -428,8 +428,26 @@ exports.getTotalInvoiceAmount = async (req, res) => {
 
 
 
-
-
+    
+   exports.getInvoiceDetails = async (req, res) => {
+        try {
+            const invoice_number = req.params.invoice_number;
+            const result = await Invoice.getInvoiceDetails(invoice_number);
+    
+            console.log("Controller Response:", result);  // ✅ Debugging step
+    
+            if (result.error) {
+                return res.status(result.status).json({ message: result.error });
+            }
+    
+            res.status(200).json(result);
+        } catch (error) {
+            console.error("Controller Error:", error);
+            res.status(500).json({ message: "Internal Server Error" });
+        }
+    };
+    
+    
 //get all invoices
 
 //my correct code

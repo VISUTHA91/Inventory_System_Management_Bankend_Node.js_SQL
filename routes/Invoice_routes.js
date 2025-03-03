@@ -21,6 +21,7 @@ router.get('/invoicebyid/pdfdownload/:id', authMiddleware,adminOnly,invoiceContr
 
 //html&css working
 router.get('/invoice/:id/pdf', invoiceController.generateInvoicePDF);
+router.get('/invoice/:invoice_number',invoiceController.getInvoiceDetails);
 
 
 // New route to get total invoice amount

@@ -6,6 +6,8 @@ const { authMiddleware, adminOnly, limiter, adminOrStaff } = require("../middlew
 
 // Route for creating a product return
 router.post('/return_product', ProductReturnController.returnProduct);
+router.post('/return_products', ProductReturnController.returnProduct)
+
 
 // Route for getting product returns by invoice ID
 router.get('/returns/:invoice_id', ProductReturnController.getReturns);

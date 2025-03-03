@@ -155,6 +155,74 @@ static async getRejectedInvoices(req, res) {
             });
         });
     }
+
+
+
+
+    static async getReturnedProducts(invoice_id) {
+        try {
+            const [rows] = await db.promise().query(
+                `SELECT pr.return_id, pr.invoice_id, p.product_name, pr.quantity, pr.return_reason, pr.return_date 
+                  FROM product_return_table pr
+                  JOIN product_table p ON pr.product_id = p.id
+                       WHERE pr.invoice_id = ?;
+                                                `,
+                [invoice_id]
+            );
+            return rows;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+
+  
+    static async returnProduct(invoice_id, returnedProducts) {
+        const connection = await db.promise().getConnection();
+        try {
+            await connection.beginTransaction();
+
+            for (const product of returnedProducts) {
+                const { product_id, quantity, return_reason } = product;
+
+                // Check if product exists in invoice
+                const [invoiceProduct] = await connection.query(
+                    `SELECT quantity FROM invoice_products WHERE invoice_id = ? AND product_id = ?`,
+                    [invoice_id, product_id]
+                );
+
+                if (invoiceProduct.length === 0) {
+                    throw new Error(`Product ID ${product_id} not found in invoice.`);
+                }
+
+                // Insert return record
+                await connection.query(
+                    `INSERT INTO product_return_table (invoice_id, product_id, quantity, return_reason, return_date) 
+                     VALUES (?, ?, ?, ?, NOW())`,
+                    [invoice_id, product_id, quantity, return_reason]
+                );
+
+                // Update product stock
+                await connection.query(
+                    `UPDATE product_table 
+                     SET product_quantity = product_quantity + ? 
+                     WHERE id = ?`,
+                    [quantity, product_id]
+                );
+            }
+
+            await connection.commit();
+            return { message: "Return processed successfully" };
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
+    }
+
+
+    
 }
 
 module.exports = ProductReturn;

@@ -97,6 +97,21 @@ class ProductReturnController {
             res.status(500).json({ message: 'Internal Server Error' });
         }
     }
+
+
+    static async processReturn (req, res) {
+        try {
+            const { invoice_id, returnedProducts } = req.body;
+            if (!invoice_id || !returnedProducts || returnedProducts.length === 0) {
+                return res.status(400).json({ error: "Invalid request data" });
+            }
+    
+            const result = await ReturnModel.returnProduct(invoice_id, returnedProducts);
+            res.status(200).json(result);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    };
 }
 
 module.exports = ProductReturnController;
