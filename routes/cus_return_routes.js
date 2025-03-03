@@ -5,19 +5,19 @@ const { authMiddleware, adminOnly, limiter, adminOrStaff } = require("../middlew
 
 
 // Route for creating a product return
-router.post('/return_product', ProductReturnController.returnProduct);
-router.post('/return_products', ProductReturnController.returnProduct)
+router.post('/return_product', authMiddleware,adminOnly,ProductReturnController.returnProduct);
+router.post('/return_products', authMiddleware,adminOnly,ProductReturnController.returnProduct)
 
 
 // Route for getting product returns by invoice ID
-router.get('/returns/:invoice_id', ProductReturnController.getReturns);
+router.get('/returns/:invoice_id', authMiddleware,adminOnly,ProductReturnController.getReturns);
 
 // Get a list of all rejected invoices
-router.get('/getAll_rejectedInvoices', ProductReturnController.getAllReturns);
+router.get('/getAll_rejectedInvoices', authMiddleware,adminOnly,ProductReturnController.getAllReturns);
 //correct code
 
 // Delete a specific product return entry
-router.delete('/delete/:return_id', ProductReturnController.deleteReturn);
+router.delete('/delete/:return_id', authMiddleware,adminOnly,ProductReturnController.deleteReturn);
 
 module.exports = router;
 
