@@ -929,11 +929,8 @@ static getTotalSalesSummary(startDate, endDate) {
     });
 }
 
-
+//top 5 most selling products for the given period
     
-
-
-//correcct code without pagination
 static getMostSoldMedicines(interval) {
     return new Promise((resolve, reject) => {
         const query = `
@@ -969,11 +966,12 @@ static getMostSoldMedicines(interval) {
         GROUP BY 
             p.product_name, p.product_price
         ORDER BY 
-            total_quantity_sold DESC;
+            total_quantity_sold DESC
+        LIMIT 5;  -- Fetch only the top 5 products
         `;
 
         db.query(query, (err, results) => {
-            console.log("Most sold medicines query results:", results);
+            console.log("Top 5 most sold medicines query results:", results);
             if (err) {
                 console.error("Database error during fetching most sold medicines:", err);
                 return reject(err);
@@ -986,13 +984,16 @@ static getMostSoldMedicines(interval) {
                 });
             } else {
                 resolve({
-                    message: `Most sold medicines in the last ${interval}`,
+                    message: `Top 5 most sold medicines in the last ${interval}`,
                     data: results,
                 });
             }
         });
     });
 }
+
+
+
 
     static getAllSoldProductsWithInvoices(startDate, endDate, interval, productName, categoryName) {
             return new Promise((resolve, reject) => {

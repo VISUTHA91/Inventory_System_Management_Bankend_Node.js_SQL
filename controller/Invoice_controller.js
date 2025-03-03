@@ -993,10 +993,9 @@ exports.getTotalSalesController = async (req, res) => {
     }
 };
 
+//top 5 most selling products for the given period
 
-
-
-exports.getMostSoldMedicinesController = (req, res) => {
+exports.getMostSoldMedicinesController = (req, res) => { 
     const { period } = req.query; // Get the time period from the query parameters
     let interval;
 
@@ -1023,6 +1022,8 @@ exports.getMostSoldMedicinesController = (req, res) => {
             });
         });
 };
+
+
 
 
 //now correctly work and without pagition
