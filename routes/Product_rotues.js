@@ -43,6 +43,8 @@ router.get('/list-soft-deleted', authMiddleware, adminOnly, productController.ge
 // Restore a soft-deleted product
 router.put('/restore/:id', productController.restoreProduct);
 
+// Route to fetch total product count
+router.get('/product_totalcount', productController.getProductCount);
 
 
 

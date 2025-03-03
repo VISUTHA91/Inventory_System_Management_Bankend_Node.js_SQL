@@ -180,6 +180,36 @@ static fetchCategoriesBySupplier(supplierId) {
 
 
 
+static fetchProductCount() {
+    return new Promise((resolve, reject) => {
+        const query = `SELECT COUNT(*) AS total_products FROM product_table WHERE is_deleted = 0;`;
+
+        db.query(query, (err, result) => {
+            if (err) {
+                console.error('Database error:', err);
+                return reject(new Error('Error fetching product count from the database'));
+            }
+            resolve(result[0].total_products);
+        });
+    });
+}
+
+static getProductCount(req, res) {
+    Product.fetchProductCount()
+        .then(total => {
+            res.status(200).json({
+                message: 'Total product count fetched successfully',
+                total_products: total
+            });
+        })
+        .catch(err => {
+            console.error('Error fetching product count:', err);
+            res.status(500).json({
+                message: 'Error fetching product count',
+                error: err.message
+            });
+        });
+}
 
     
 

@@ -116,6 +116,26 @@ static getAllPro(req, res) {
 }
 
 
+// Get total product count
+static getProductCount(req, res) {
+    Product.fetchProductCount()
+        .then(total => {
+            res.status(200).json({
+                message: 'Total product count fetched successfully',
+                total_products: total
+            });
+        })
+        .catch(err => {
+            console.error('Error fetching product count:', err);
+            res.status(500).json({
+                message: 'Error fetching product count',
+                error: err.message
+            });
+        });
+}
+
+
+
 //pagination products
     // Get product by ID
    
