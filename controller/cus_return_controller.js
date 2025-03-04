@@ -42,7 +42,7 @@ class ProductReturnController {
     static async getAllReturns(req, res) {
         try {
             const page = parseInt(req.query.page) || 1; // Get page from query params, default to 1
-            const limit = 5; // Fixed limit per page
+            const limit = 10; // Fixed limit per page
 
             const returns = await ProductReturn.getAllReturns(page, limit);
             res.status(200).json(returns);

@@ -37,7 +37,7 @@ class ProductReturn {
 // }
 
 // Get paginated product returns
-static getAllReturns(page = 1, limit = 5) {
+static getAllReturns(page = 1, limit = 10) {
     return new Promise((resolve, reject) => {
         const offset = (page - 1) * limit; // Calculate offset for pagination
 
