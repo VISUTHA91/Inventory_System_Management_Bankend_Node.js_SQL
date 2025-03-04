@@ -929,7 +929,7 @@ static getTotalSalesSummary(startDate, endDate) {
     });
 }
 
-//changes
+//changes2
 //top 5 most selling products for the given period
     
 static getMostSoldMedicines(interval) {
