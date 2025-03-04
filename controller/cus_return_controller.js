@@ -38,7 +38,7 @@ class ProductReturnController {
         }
     }
     
-    
+    //pagination return
     static async getAllReturns(req, res) {
         try {
             const page = parseInt(req.query.page) || 1; // Get page from query params, default to 1
