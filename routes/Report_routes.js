@@ -38,6 +38,7 @@ const { authMiddleware, adminOnly, limiter, adminOrStaff } = require("../middlew
 // router.get('/sales-report/yearly', salesController.getYearlySales);
 
 // Individual routes for automatic reports
+// Route to get income report based on type (daily, weekly, monthly, etc.)
 router.get("/income-report/:type", getIncomeReport);
 
 module.exports = router;
