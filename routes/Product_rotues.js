@@ -23,8 +23,12 @@ router.get('/Allpro_list', authMiddleware, adminOrStaff, productController.getAl
 
 router.get('/sup_cat_pro/:supplier_id', authMiddleware, adminOnly, productController.getSupplierCategories);//suppliers product and category list
 
-router.get('/stock_list_product', authMiddleware, adminOrStaff, productController.getAllProducts_stock_search);
+router.get('/stock_list_product',  productController.getAllProducts_stock_search);
 //(stock list)
+router.get("/products/downloadStockPDF", productController.downloadStockPDF);
+router.get("/products/downloadStockCSV", productController.downloadStockCSV);
+//download the stock report 
+
 
 
 router.get('/filter_pro', authMiddleware, adminOrStaff, productController.searchProducts);  // Get all products search

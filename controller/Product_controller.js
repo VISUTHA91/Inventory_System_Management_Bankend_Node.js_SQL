@@ -1,6 +1,10 @@
 
 const Product = require('../model/Product_model');
 const db = require("../config/Database");
+const PDFDocument = require('pdfkit');
+const fs = require('fs');
+const { Parser } = require('json2csv');
+
 
 
 class ProductController {
@@ -46,6 +50,130 @@ static getAllProducts_stock_search(req, res) {
             });
         });
 }
+
+
+
+   // Function to fetch stock data based on filters
+//    static getStockReport(req, res) {
+//     const { status, start_date, end_date, format } = req.query;
+
+//     // Fetch filtered stock details
+//     Product.stockfetchAllpro(status, null, start_date, end_date, null)
+//         .then(products => {
+//             if (products.length === 0) {
+//                 return res.status(404).json({ message: 'No products found' });
+//             }
+
+//             if (format === 'pdf') {
+//                 return ProductController.generatePDFReport(products, res);
+//             } else if (format === 'csv') {
+//                 return ProductController.generateCSVReport(products, res);
+//             } else {
+//                 return res.status(400).json({ message: 'Invalid format. Use pdf or csv.' });
+//             }
+//         })
+//         .catch(err => {
+//             console.error('Error generating report:', err);
+//             res.status(500).json({
+//                 message: 'Error generating report',
+//                 error: err.message
+//             });
+//         });
+// }
+
+
+static async downloadStockPDF(req, res) {
+    try {
+        const { status, start_date, end_date } = req.query;
+        const products = await Product.stockfetchAllpro(status, null, start_date, end_date, null);
+
+        if (products.length === 0) {
+            return res.status(404).json({ message: 'No products found' });
+        }
+
+        // Create PDF
+        const doc = new PDFDocument();
+        const filePath = `./stock_report_${Date.now()}.pdf`;
+        const stream = fs.createWriteStream(filePath);
+        doc.pipe(stream);
+
+        // Add Title
+        doc.fontSize(20).text('Stock Report', { align: 'center' });
+        doc.moveDown();
+
+        // Add Table Headers
+        doc.fontSize(12).text('Product Name', 50, doc.y);
+        doc.text('Category', 200, doc.y);
+        doc.text('Stock Status', 350, doc.y);
+        doc.text('Expiry Date', 500, doc.y);
+        doc.moveDown();
+
+        // Add Product Data
+        products.forEach((product) => {
+            doc.text(product.product_name, 50, doc.y);
+            doc.text(product.product_category, 200, doc.y);
+            doc.text(product.stock_status, 350, doc.y);
+            doc.text(product.expiry_date, 500, doc.y);
+            doc.moveDown();
+        });
+
+        doc.end();
+
+        stream.on('finish', () => {
+            res.download(filePath, 'Stock_Report.pdf', (err) => {
+                if (err) console.error('Error sending file:', err);
+                fs.unlinkSync(filePath);
+            });
+        });
+
+    } catch (err) {
+        console.error('Error generating PDF:', err);
+        res.status(500).json({ message: 'Error generating PDF' });
+    }
+}
+
+
+
+
+static async downloadStockCSV(req, res) {
+    try {
+        const { status, start_date, end_date } = req.query;
+        const products = await Product.stockfetchAllpro(status, null, start_date, end_date, null);
+
+        if (products.length === 0) {
+            return res.status(404).json({ message: 'No products found' });
+        }
+
+        // Define CSV Fields
+        const fields = ['product_name', 'product_category', 'stock_status', 'expiry_date'];
+        const parser = new Parser({ fields });
+        const csvData = parser.parse(products);
+
+        const filePath = `./stock_report_${Date.now()}.csv`;
+        fs.writeFileSync(filePath, csvData);
+
+        res.download(filePath, 'Stock_Report.csv', (err) => {
+            if (err) console.error('Error sending file:', err);
+            fs.unlinkSync(filePath);
+        });
+
+    } catch (err) {
+        console.error('Error generating CSV:', err);
+        res.status(500).json({ message: 'Error generating CSV' });
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 static getSupplierCategories = async (req, res) => {
     console.log("Fetching categories for supplierId:", req.params.supplier_id); // Debugging
