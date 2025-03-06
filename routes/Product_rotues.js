@@ -27,7 +27,7 @@ router.get('/stock_list_product', authMiddleware, adminOrStaff, productControlle
 //(stock list)
 
 
-router.get('/filter_pro', authMiddleware, adminOrStaff, productController.searchProducts);  // Get all products
+router.get('/filter_pro', authMiddleware, adminOrStaff, productController.searchProducts);  // Get all products search
 
 
 router.get('/proByid/:id', authMiddleware, adminOrStaff, productController.getProductById);  // Get product by ID
