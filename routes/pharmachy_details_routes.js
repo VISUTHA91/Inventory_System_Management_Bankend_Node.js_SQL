@@ -7,15 +7,15 @@ const { authMiddleware, adminOnly, limiter, adminOrStaff } = require("../middlew
 router.post('/insert', shopController.createShop);
 
 // Get a shop by ID
-router.get('getbyid/:shopId', shopController.getShopById);
+router.get('/getbyid/:shopId', shopController.getShopById);
 
 // Get all shops
 router.get('/getAll', shopController.getAllShops);
 
 // Update a shop
-router.put('update/:shopId', shopController.updateShop);
+router.put('/update/:shopId', shopController.updateShop);
 
 // Delete a shop
-router.delete('del/:shopId', shopController.deleteShop);
+router.delete('/del/:shopId', shopController.deleteShop);
 
 module.exports = router;

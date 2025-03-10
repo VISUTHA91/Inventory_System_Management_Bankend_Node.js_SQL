@@ -4,7 +4,8 @@ const db = require("../config/Database");
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const { Parser } = require('json2csv');
-
+const puppeteer = require('puppeteer');
+const path = require('path');
 
 
 class ProductController {
@@ -52,89 +53,188 @@ static getAllProducts_stock_search(req, res) {
 }
 
 
+//stock report and filtering products correctly work
+// static async downloadStockPDF(req, res) { 
+//     try {
+//         const { status, start_date, end_date } = req.query;
+//         const products = await Product.stockfetchAllpro(status, null, start_date, end_date, null);
 
-   // Function to fetch stock data based on filters
-//    static getStockReport(req, res) {
-//     const { status, start_date, end_date, format } = req.query;
+//         if (products.length === 0) {
+//             return res.status(404).json({ message: 'No products found' });
+//         }
 
-//     // Fetch filtered stock details
-//     Product.stockfetchAllpro(status, null, start_date, end_date, null)
-//         .then(products => {
-//             if (products.length === 0) {
-//                 return res.status(404).json({ message: 'No products found' });
-//             }
+//         // Create PDF
+//         const doc = new PDFDocument({ margin: 30 });
+//         const filePath = `./stock_report_${Date.now()}.pdf`;
+//         const stream = fs.createWriteStream(filePath);
+//         doc.pipe(stream);
 
-//             if (format === 'pdf') {
-//                 return ProductController.generatePDFReport(products, res);
-//             } else if (format === 'csv') {
-//                 return ProductController.generateCSVReport(products, res);
-//             } else {
-//                 return res.status(400).json({ message: 'Invalid format. Use pdf or csv.' });
-//             }
-//         })
-//         .catch(err => {
-//             console.error('Error generating report:', err);
-//             res.status(500).json({
-//                 message: 'Error generating report',
-//                 error: err.message
+//         // ** Title - Centered Properly **
+//         doc.fontSize(20).text('Stock Report', { align: 'center' });
+//         doc.moveDown(2);
+
+//         // ** Define Proper Column Positions **
+//         const startX = 50;
+//         const colWidths = [150, 150, 120, 120, 120, 80]; // Adjusted column spacing
+//         const headers = ['Product Name', 'Category', 'Stock Status', 'Batch No', 'Supplier', 'Quantity'];
+
+//         // ** Print Table Headers (Properly Aligned) **
+//         let currentX = startX;
+//         doc.font('Helvetica-Bold').fontSize(12);
+//         headers.forEach((header, index) => {
+//             doc.text(header, currentX, doc.y, { width: colWidths[index], align: 'center' });
+//             currentX += colWidths[index];
+//         });
+
+//         doc.moveDown(0.5);
+        
+//         // ** Draw a Line Under Headers **
+//         doc.moveTo(startX, doc.y).lineTo(700, doc.y).stroke();
+//         doc.moveDown();
+
+//         // ** Print Product Data (Aligned Properly) **
+//         doc.font('Helvetica').fontSize(10);
+//         products.forEach((product) => {
+//             let yPos = doc.y;  // Capture current Y position
+//             currentX = startX;
+
+//             doc.text(product.product_name, currentX, yPos, { width: colWidths[0], align: 'center' });
+//             currentX += colWidths[0];
+
+//             doc.text(product.product_category, currentX, yPos, { width: colWidths[1], align: 'center' });
+//             currentX += colWidths[1];
+
+//             doc.text(product.stock_status, currentX, yPos, { width: colWidths[2], align: 'center' });
+//             currentX += colWidths[2];
+
+//             doc.text(product.product_batch_no, currentX, yPos, { width: colWidths[3], align: 'center' });
+//             currentX += colWidths[3];
+
+//             doc.text(product.supplier, currentX, yPos, { width: colWidths[4], align: 'center' });
+//             currentX += colWidths[4];
+
+//             doc.text(product.product_quantity.toString(), currentX, yPos, { width: colWidths[5], align: 'center' });
+
+//             doc.moveDown(); // Move to the next line
+//         });
+
+//         doc.end();
+
+//         stream.on('finish', () => {
+//             res.download(filePath, 'Stock_Report.pdf', (err) => {
+//                 if (err) console.error('Error sending file:', err);
+//                 fs.unlinkSync(filePath);
 //             });
 //         });
+
+//     } catch (err) {
+//         console.error('Error generating PDF:', err);
+//         res.status(500).json({ message: 'Error generating PDF' });
+//     }
 // }
-
-
-static async downloadStockPDF(req, res) {
+static downloadStockPDF = async (req, res) => {
     try {
         const { status, start_date, end_date } = req.query;
+
+        // Fetch filtered stock data
         const products = await Product.stockfetchAllpro(status, null, start_date, end_date, null);
 
         if (products.length === 0) {
             return res.status(404).json({ message: 'No products found' });
         }
 
-        // Create PDF
-        const doc = new PDFDocument();
-        const filePath = `./stock_report_${Date.now()}.pdf`;
-        const stream = fs.createWriteStream(filePath);
-        doc.pipe(stream);
-
-        // Add Title
-        doc.fontSize(20).text('Stock Report', { align: 'center' });
-        doc.moveDown();
-
-        // Add Table Headers
-        doc.fontSize(12).text('Product Name', 50, doc.y);
-        doc.text('Category', 200, doc.y);
-        doc.text('Stock Status', 350, doc.y);
-        doc.text('Expiry Date', 500, doc.y);
-        doc.moveDown();
-
-        // Add Product Data
+        // Convert product data into an HTML table
+        let tableRows = '';
         products.forEach((product) => {
-            doc.text(product.product_name, 50, doc.y);
-            doc.text(product.product_category, 200, doc.y);
-            doc.text(product.stock_status, 350, doc.y);
-            doc.text(product.expiry_date, 500, doc.y);
-            doc.moveDown();
+            tableRows += `
+                <tr>
+                    <td>${product.product_name}</td>
+                    <td>${product.product_category}</td>
+                    <td>${product.stock_status}</td>
+                    <td>${product.product_batch_no}</td>
+                    <td>${product.supplier}</td>
+                   <td>${product.MFD && !isNaN(new Date(product.MFD)) ? new Date(product.MFD).toLocaleDateString() : 'N/A'}</td>
+                    <td>${product.expiry_date ? new Date(product.expiry_date).toLocaleDateString() : 'N/A'}</td>
+                    <td>${product.product_quantity}</td>
+                </tr>
+            `;
+
+            // console.log("MFD Value:", product.MFD);
+
         });
 
-        doc.end();
+        // Define HTML structure with CSS for styling
+        const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Stock Report</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 20px; }
+                h2 { text-align: center; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+                th { background-color: #f4f4f4; }
+            </style>
+        </head>
+        <body>
+            <h2>Stock Report</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product Name</th>
+                        <th>Category</th>
+                        <th>Stock Status</th>
+                        <th>Batch No</th>
+                        <th>Supplier</th>
+                        <th>MFD</th>
+                        <th>Expiry Date</th>
+                        <th>Quantity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows}
+                </tbody>
+            </table>
+        </body>
+        </html>
+        `;
 
-        stream.on('finish', () => {
-            res.download(filePath, 'Stock_Report.pdf', (err) => {
-                if (err) console.error('Error sending file:', err);
-                fs.unlinkSync(filePath);
-            });
+        // Generate PDF using Puppeteer
+        const browser = await puppeteer.launch();
+        const page = await browser.newPage();
+        await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+
+        // Define PDF file path
+        const filePath = path.join(__dirname, `../../stock_report_${Date.now()}.pdf`);
+
+        await page.pdf({
+            path: filePath,
+            format: 'A4',
+            printBackground: true,
+            margin: { top: '20px', bottom: '20px', left: '20px', right: '20px' }
+        });
+
+        await browser.close();
+
+        // Send file to client
+        res.download(filePath, 'Stock_Report.pdf', (err) => {
+            if (err) console.error('Error sending file:', err);
+            fs.unlinkSync(filePath); // Delete the file after download
         });
 
     } catch (err) {
         console.error('Error generating PDF:', err);
         res.status(500).json({ message: 'Error generating PDF' });
     }
-}
+};
 
 
 
 
+
+
+//corrrectly work good wel
 static async downloadStockCSV(req, res) {
     try {
         const { status, start_date, end_date } = req.query;
@@ -145,7 +245,7 @@ static async downloadStockCSV(req, res) {
         }
 
         // Define CSV Fields
-        const fields = ['product_name', 'product_category', 'stock_status', 'expiry_date'];
+        const fields = ['product_name', 'product_category', 'stock_status', 'product_batch_no', 'supplier', 'product_quantity', 'expiry_date'];
         const parser = new Parser({ fields });
         const csvData = parser.parse(products);
 
@@ -162,7 +262,6 @@ static async downloadStockCSV(req, res) {
         res.status(500).json({ message: 'Error generating CSV' });
     }
 }
-
 
 
 
