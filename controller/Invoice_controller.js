@@ -948,6 +948,32 @@ exports.generatePDFReport = async (req, res) => {
 };
 
 
+// exports.generatePDFReport = async (req, res) => {
+//     try {
+//         console.log("📄 Generating PDF Report...");
+        
+//         const data = await Invoice.getSalesReport();
+//         console.log("✅ Sales data retrieved:", data);
+
+//         const filePath = await generatePDF(data);
+//         console.log("📂 PDF file generated at:", filePath);
+
+//         res.setHeader("Content-Type", "application/pdf");
+//         res.setHeader("Content-Disposition", 'attachment; filename="sales-report.pdf"');
+        
+//         return res.download(filePath, (err) => {
+//             if (err) {
+//                 console.error("❌ Error while sending file:", err);
+//                 res.status(500).json({ message: "Error sending PDF report", error: err });
+//             }
+//         });
+//     } catch (error) {
+//         console.error("❌ PDF Generation Error:", error);
+//         res.status(500).json({ message: "Error generating PDF report", error });
+//     }
+// };
+
+
 
 
 //🔹 Total Sales Controller

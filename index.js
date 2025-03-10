@@ -100,10 +100,11 @@ const port = 3002;
 
 // Enable CORS
 app.use(cors({
-  origin: '*', // Replace with your frontend's origin
+  origin: '*' ,// Replace with your frontend's origin
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   allowedHeaders: 'Content-Type, Authorization',
-  credentials: true
+  // exposedHeaders: 'Content-Disposition', // ✅ Allow browser access to this header
+  credentials:true
 }));
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
