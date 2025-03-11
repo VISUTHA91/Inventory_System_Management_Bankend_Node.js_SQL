@@ -461,11 +461,13 @@ static calculateSellingPrice(productPrice, productDiscount) {
     return (price - discount).toFixed(2); // Round to 2 decimal places
 }
 
+
 static calculateFinalSellingPrice(sellingPrice, gst) {
     console.log(sellingPrice, gst)
     const gstAmount = (parseFloat(sellingPrice || 0) * parseFloat(gst || 0)) / 100;
     return (parseFloat(sellingPrice) + gstAmount).toFixed(2); // Round to 2 decimal places
 }
+
 
 static determineStockStatus(quantity) {
     if (quantity === 0) return 'Out of Stock';
