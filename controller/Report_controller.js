@@ -1,8 +1,8 @@
 
 
-//already work correck
-const ReportModel = require("../model/Report_model");
 
+const ReportModel = require("../model/Report_model");
+//already work correck
 // const getIncomeReport = async (req, res) => {
 //     try {
 //         console.log("Report Generated At:", new Date().toLocaleString());
@@ -68,6 +68,8 @@ const ReportModel = require("../model/Report_model");
 //         });
 //     }
 // };
+
+
 const getIncomeReport = async (req, res) => {
     try {
         console.log("Report Generated At:", new Date().toLocaleString());

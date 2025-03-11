@@ -1,5 +1,6 @@
 const Invoice = require('../model/Invoice_model');
 const Customer = require('../model/Customer_model');
+const Product = require('../model/Product_model');
 const db = require('../config/Database'); 
 const { generateCSV, generatePDF ,generateInvoicePDF} = require("../Helper/export_helper");
 
@@ -253,6 +254,264 @@ exports.generateInvoiceNumber = async (req, res) => {
 //     }
 // };
 
+
+
+
+
+//tester ask change correctly worked
+
+// exports.createInvoice = async (req, res) => {
+//     try {
+//         const { customer_name, phone, products, payment_status, payment_method } = req.body;
+
+//         console.log(req.body);
+//         console.log('Products:', products);
+
+//         // ✅ Validate phone number
+//         if (!phone || typeof phone !== 'string' || !/^\d{10,15}$/.test(phone)) {
+//             return res.status(400).json({ message: 'Invalid phone number. It must contain only digits and be 10-15 characters long.' });
+//         }
+
+//         let customer_id;
+
+//         // Check if the customer exists
+//         const existingCustomer = await Customer.checkCustomerExists(phone);
+//         if (existingCustomer) {
+//             customer_id = existingCustomer.customer_id;
+//         } else {
+//             // Create a new customer if not found
+//             customer_id = await Customer.create({ customer_name, phone });
+//             console.log("New customer created with ID:", customer_id);
+//         }
+
+//         let totalPrice = 0;
+//         let totalGST = 0;
+//         let totalDiscount = 0;
+//         const lowStockAlerts = []; // Store low stock alerts
+//         const detailedProducts = [];
+
+//         // ✅ Validate products array
+//         if (!Array.isArray(products) || products.length === 0) {
+//             return res.status(400).json({ message: 'Invalid products data. It must be a non-empty array.' });
+//         }
+
+//         for (const item of products) {
+//             if (!item.product_id || isNaN(item.product_id) || !item.quantity || isNaN(item.quantity) || item.quantity <= 0) {
+//                 return res.status(400).json({ message: 'Invalid product details. Product ID and quantity must be valid numbers greater than 0.' });
+//             }
+//             //Check updated stock and trigger low stock alert
+//             const updatedProduct = await Invoice.checkProductExists(item.product_id);
+//             if (updatedProduct.product_quantity < 30) {
+//                 lowStockAlerts.push(`⚠️ Low stock alert: ${updatedProduct.product_name} (Remaining: ${updatedProduct.product_quantity})`);
+//             }
+
+//             const productDetails = await Invoice.checkProductExists(item.product_id);
+//             if (!productDetails) {
+//                 return res.status(404).json({ message: `Product with ID ${item.product_id} not found` });
+//             }
+//             if (productDetails.product_quantity < item.quantity) {
+//                 return res.status(400).json({ message: `Insufficient stock for product with ID ${item.product_id}` });
+//             }
+
+//             const unitPrice = parseFloat(productDetails.product_price);
+//             // const unitPrice = parseFloat(productDetails.selling_price);
+//             const subtotal = unitPrice * item.quantity;
+//             const gstAmount = parseFloat(((subtotal * productDetails.GST) / 100).toFixed(2));
+//             const discountAmount = parseFloat(((subtotal * productDetails.product_discount) / 100).toFixed(2));
+
+//             totalPrice += subtotal;
+//             totalGST += gstAmount;
+//             totalDiscount += discountAmount;
+
+//             detailedProducts.push({
+//                 product_id: item.product_id,
+//                 product_name: productDetails.product_name,
+//                 unit_price: unitPrice.toFixed(2),
+//                 quantity: item.quantity,
+//                 subtotal: subtotal.toFixed(2),
+//                 discount: discountAmount.toFixed(2),
+//                 gst: gstAmount.toFixed(2),
+//                 // final_price: (subtotal + gstAmount - discountAmount).toFixed(2),
+//                 final_price: (subtotal).toFixed(2),
+//             });
+//         }
+
+//         const finalPrice = parseFloat((totalPrice + totalGST - totalDiscount).toFixed(2));
+//                 // const finalPrice = parseFloat((totalPrice).toFixed(2));
+
+//         if (isNaN(finalPrice) || isNaN(totalPrice) || isNaN(totalGST) || isNaN(totalDiscount)) {
+//             return res.status(400).json({ message: 'Error in calculating prices' });
+//         }
+
+//         const invoiceNumber = await Invoice.generateInvoiceNumber();
+
+//         try {
+//             for (const item of products) {
+//                 await Invoice.updateStock(item.product_id, item.quantity);
+//             }
+
+//             const invoiceData = {
+//                 invoice_number: invoiceNumber,
+//                 customer_id,
+//                 product_id: products.map((p) => p.product_id),
+//                 quantity: products.map((p) => p.quantity),
+//                 discount: totalDiscount.toFixed(2),
+//                 total_price: totalPrice.toFixed(2),
+//                 final_price: finalPrice.toFixed(2),
+//                 payment_status,
+//                 payment_method
+//             };
+
+//             const invoice = await Invoice.createInvoice(invoiceData);
+
+//             res.status(201).json({
+//                 message: 'Invoice created successfully',
+//                 low_stock_alerts: lowStockAlerts,  // ✅ Add this line
+//                 invoice_details: {
+//                     invoice_id: invoice.invoice_id,
+//                     invoice_number: invoice.invoice_number,
+//                     customer_id: invoice.customer_id,
+//                     payment_status: invoice.payment_status,
+//                     payment_method: invoice.payment_method,
+//                     products: detailedProducts,
+//                     summary: {
+//                         total_price: totalPrice.toFixed(2),
+//                         total_discount: totalDiscount.toFixed(2),
+//                         total_gst: totalGST.toFixed(2),
+//                         final_price: finalPrice.toFixed(2),
+//                     },
+//                 },
+//             });
+//         } catch (error) {
+//             console.error('Error creating invoice:', error);
+//             res.status(500).json({ message: 'Internal Server Error' });
+//         }
+//     } catch (error) {
+//         console.error('Error creating invoice:', error);
+//         res.status(500).json({ message: 'Internal Server Error' });
+//     }
+// };
+
+
+//changes
+// exports.createInvoice = async (req, res) => {
+//     try {
+//         const { customer_name, phone, products, payment_status, payment_method } = req.body;
+
+//         console.log(req.body);
+//         console.log('Products:', products);
+
+//         if (!phone || typeof phone !== 'string' || !/^\d{10,15}$/.test(phone)) {
+//             return res.status(400).json({ message: 'Invalid phone number. It must contain only digits and be 10-15 characters long.' });
+//         }
+
+//         let customer_id;
+//         const existingCustomer = await Customer.checkCustomerExists(phone);
+//         if (existingCustomer) {
+//             customer_id = existingCustomer.customer_id;
+//         } else {
+//             customer_id = await Customer.create({ customer_name, phone });
+//             console.log("New customer created with ID:", customer_id);
+//         }
+
+//         let totalPrice = 0;
+//         let lowStockAlerts = [];
+//         let detailedProducts = [];
+
+//         if (!Array.isArray(products) || products.length === 0) {
+//             return res.status(400).json({ message: 'Invalid products data. It must be a non-empty array.' });
+//         }
+
+//         for (const item of products) {
+//             if (!item.product_id || isNaN(item.product_id) || !item.quantity || isNaN(item.quantity) || item.quantity <= 0) {
+//                 return res.status(400).json({ message: 'Invalid product details. Product ID and quantity must be valid numbers greater than 0.' });
+//             }
+
+//             const productDetails = await Invoice.checkProductExists(item.product_id);
+//             if (!productDetails) {
+//                 return res.status(404).json({ message: `Product with ID ${item.product_id} not found` });
+//             }
+//             if (productDetails.product_quantity < item.quantity) {
+//                 return res.status(400).json({ message: `Insufficient stock for product with ID ${item.product_id}` });
+//             }
+
+//             if (productDetails.product_quantity < 30) {
+//                 lowStockAlerts.push(`⚠️ Low stock alert: ${productDetails.product_name} (Remaining: ${productDetails.product_quantity})`);
+//             }
+
+//             // ✅ Fetch `selling_price` from the database (ALREADY INCLUDES DISCOUNT & GST)
+//             const sellingPrice = parseFloat(productDetails.selling_price); 
+
+//             if (isNaN(sellingPrice)) {
+//                 return res.status(500).json({ message: `Error: sellingPrice is NaN for product ${item.product_id}` });
+//             }
+
+//             // ✅ Subtotal Calculation (Directly using `selling_price`)
+//             const subtotal = sellingPrice * item.quantity;
+
+//             totalPrice += subtotal;
+
+//             detailedProducts.push({
+//                 product_id: item.product_id,
+//                 product_name: productDetails.product_name,
+//                 unit_price: sellingPrice.toFixed(2),
+//                 quantity: item.quantity,
+//                 subtotal: subtotal.toFixed(2),
+//             });
+//         }
+
+//         // ✅ Final Invoice Price (Total Price of Products)
+//         const finalPrice = parseFloat(totalPrice.toFixed(2));
+
+//         if (isNaN(finalPrice) || isNaN(totalPrice)) {
+//             return res.status(400).json({ message: 'Error in calculating prices' });
+//         }
+
+//         const invoiceNumber = await Invoice.generateInvoiceNumber();
+
+//         try {
+//             for (const item of products) {
+//                 await Invoice.updateStock(item.product_id, item.quantity);
+//             }
+
+//             const invoiceData = {
+//                 invoice_number: invoiceNumber,
+//                 customer_id,
+//                 product_id: products.map((p) => p.product_id),
+//                 quantity: products.map((p) => p.quantity),
+//                 total_price: totalPrice.toFixed(2),
+//                 final_price: finalPrice.toFixed(2),
+//                 payment_status,
+//                 payment_method
+//             };
+
+//             const invoice = await Invoice.createInvoice(invoiceData);
+
+//             res.status(201).json({
+//                 message: 'Invoice created successfully',
+//                 low_stock_alerts: lowStockAlerts,
+//                 invoice_details: {
+//                     invoice_id: invoice.invoice_id,
+//                     invoice_number: invoice.invoice_number,
+//                     customer_id: invoice.customer_id,
+//                     payment_status: invoice.payment_status,
+//                     payment_method: invoice.payment_method,
+//                     products: detailedProducts,
+//                     summary: {
+//                         total_price: totalPrice.toFixed(2),
+//                         final_price: finalPrice.toFixed(2),
+//                     },
+//                 },
+//             });
+//         } catch (error) {
+//             console.error('Error creating invoice:', error);
+//             res.status(500).json({ message: 'Internal Server Error' });
+//         }
+//     } catch (error) {
+//         console.error('Error creating invoice:', error);
+//         res.status(500).json({ message: 'Internal Server Error' });
+//     }
+// };
 exports.createInvoice = async (req, res) => {
     try {
         const { customer_name, phone, products, payment_status, payment_method } = req.body;
@@ -260,30 +519,24 @@ exports.createInvoice = async (req, res) => {
         console.log(req.body);
         console.log('Products:', products);
 
-        // ✅ Validate phone number
         if (!phone || typeof phone !== 'string' || !/^\d{10,15}$/.test(phone)) {
             return res.status(400).json({ message: 'Invalid phone number. It must contain only digits and be 10-15 characters long.' });
         }
 
         let customer_id;
-
-        // Check if the customer exists
         const existingCustomer = await Customer.checkCustomerExists(phone);
         if (existingCustomer) {
             customer_id = existingCustomer.customer_id;
         } else {
-            // Create a new customer if not found
             customer_id = await Customer.create({ customer_name, phone });
             console.log("New customer created with ID:", customer_id);
         }
 
         let totalPrice = 0;
-        let totalGST = 0;
-        let totalDiscount = 0;
-        const lowStockAlerts = []; // Store low stock alerts
-        const detailedProducts = [];
+        let totalDiscount = 0;  // ✅ New variable to store total discount
+        let lowStockAlerts = [];
+        let detailedProducts = [];
 
-        // ✅ Validate products array
         if (!Array.isArray(products) || products.length === 0) {
             return res.status(400).json({ message: 'Invalid products data. It must be a non-empty array.' });
         }
@@ -291,11 +544,6 @@ exports.createInvoice = async (req, res) => {
         for (const item of products) {
             if (!item.product_id || isNaN(item.product_id) || !item.quantity || isNaN(item.quantity) || item.quantity <= 0) {
                 return res.status(400).json({ message: 'Invalid product details. Product ID and quantity must be valid numbers greater than 0.' });
-            }
-            //Check updated stock and trigger low stock alert
-            const updatedProduct = await Invoice.checkProductExists(item.product_id);
-            if (updatedProduct.product_quantity < 30) {
-                lowStockAlerts.push(`⚠️ Low stock alert: ${updatedProduct.product_name} (Remaining: ${updatedProduct.product_quantity})`);
             }
 
             const productDetails = await Invoice.checkProductExists(item.product_id);
@@ -306,31 +554,45 @@ exports.createInvoice = async (req, res) => {
                 return res.status(400).json({ message: `Insufficient stock for product with ID ${item.product_id}` });
             }
 
-            const unitPrice = parseFloat(productDetails.product_price);
-            const subtotal = unitPrice * item.quantity;
-            const gstAmount = parseFloat(((subtotal * productDetails.GST) / 100).toFixed(2));
-            const discountAmount = parseFloat(((subtotal * productDetails.product_discount) / 100).toFixed(2));
+            if (productDetails.product_quantity < 30) {
+                lowStockAlerts.push(`⚠️ Low stock alert: ${productDetails.product_name} (Remaining: ${productDetails.product_quantity})`);
+            }
+
+            // ✅ Fetch `selling_price` from the database (already includes GST)
+            const sellingPrice = parseFloat(productDetails.selling_price); 
+
+            if (isNaN(sellingPrice)) {
+                return res.status(500).json({ message: `Error: sellingPrice is NaN for product ${item.product_id}` });
+            }
+
+            // ✅ Calculate Discount Amount (based on product_discount percentage)
+            const productDiscountPercentage = parseFloat(productDetails.product_discount); // e.g., 10% stored as 10.00
+            const discountAmount = (productDiscountPercentage / 100) * (sellingPrice * item.quantity);
+
+            // ✅ Add discount to totalDiscount
+            totalDiscount += discountAmount;
+
+            // ✅ Subtotal Calculation (before discount)
+            const subtotal = sellingPrice * item.quantity;
 
             totalPrice += subtotal;
-            totalGST += gstAmount;
-            totalDiscount += discountAmount;
 
             detailedProducts.push({
                 product_id: item.product_id,
                 product_name: productDetails.product_name,
-                unit_price: unitPrice.toFixed(2),
+                unit_price: sellingPrice.toFixed(2),
                 quantity: item.quantity,
                 subtotal: subtotal.toFixed(2),
-                discount: discountAmount.toFixed(2),
-                gst: gstAmount.toFixed(2),
-                final_price: (subtotal + gstAmount - discountAmount).toFixed(2),
+                discount_percentage: productDiscountPercentage.toFixed(2) + "%",
+                discount_amount: discountAmount.toFixed(2),
             });
         }
 
-        const finalPrice = parseFloat((totalPrice + totalGST - totalDiscount).toFixed(2));
+        // ✅ Final Price Calculation
+        const finalPrice = parseFloat((totalPrice - totalDiscount).toFixed(2));
 
-        if (isNaN(finalPrice) || isNaN(totalPrice) || isNaN(totalGST) || isNaN(totalDiscount)) {
-            return res.status(400).json({ message: 'Error in calculating prices' });
+        if (isNaN(finalPrice) || isNaN(totalPrice) || isNaN(totalDiscount)) {
+            return res.status(400).json({ message: 'Error in calculating prices or discount' });
         }
 
         const invoiceNumber = await Invoice.generateInvoiceNumber();
@@ -345,9 +607,10 @@ exports.createInvoice = async (req, res) => {
                 customer_id,
                 product_id: products.map((p) => p.product_id),
                 quantity: products.map((p) => p.quantity),
-                discount: totalDiscount.toFixed(2),
                 total_price: totalPrice.toFixed(2),
+                total_discount: totalDiscount.toFixed(2),  // ✅ Store total discount in DB
                 final_price: finalPrice.toFixed(2),
+                discount: totalDiscount.toFixed(2), 
                 payment_status,
                 payment_method
             };
@@ -356,7 +619,7 @@ exports.createInvoice = async (req, res) => {
 
             res.status(201).json({
                 message: 'Invoice created successfully',
-                low_stock_alerts: lowStockAlerts,  // ✅ Add this line
+                low_stock_alerts: lowStockAlerts,
                 invoice_details: {
                     invoice_id: invoice.invoice_id,
                     invoice_number: invoice.invoice_number,
@@ -366,8 +629,7 @@ exports.createInvoice = async (req, res) => {
                     products: detailedProducts,
                     summary: {
                         total_price: totalPrice.toFixed(2),
-                        total_discount: totalDiscount.toFixed(2),
-                        total_gst: totalGST.toFixed(2),
+                        total_discount: totalDiscount.toFixed(2),  // ✅ Show total discount in response
                         final_price: finalPrice.toFixed(2),
                     },
                 },
@@ -381,7 +643,6 @@ exports.createInvoice = async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
-
 
 
 
@@ -706,10 +967,12 @@ exports.downloadInvoicePdf = async (req, res) => {
         // Final summary section
         doc.moveDown();
         doc.fontSize(fontSizeText);
-        doc.text(`Subtotal: ${parseFloat(invoice.total_price).toFixed(2)}`, selectedSize.width - 130, cursorY, { align: 'right' });
-
         const discount = isNaN(invoice.discount) ? 0 : parseFloat(invoice.discount).toFixed(2);
         doc.text(`Discount: ${discount}`, selectedSize.width - 130, cursorY + 15, { align: 'right' });
+
+        doc.text(`Total: ${parseFloat(invoice.total_price).toFixed(2)}`, selectedSize.width - 130, cursorY, { align: 'right' });
+
+       
 
         doc.fontSize(fontSizeTitle).text(`Final Price: ${parseFloat(invoice.final_price).toFixed(2)}`, selectedSize.width - 130, cursorY + 30, { align: 'right', bold: true });
 
