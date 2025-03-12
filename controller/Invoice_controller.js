@@ -514,6 +514,9 @@ exports.generateInvoiceNumber = async (req, res) => {
 //     }
 // };
 
+
+
+
 exports.createInvoice = async (req, res) => {
     try {
         const { customer_name, phone, products, payment_status, payment_method } = req.body;
