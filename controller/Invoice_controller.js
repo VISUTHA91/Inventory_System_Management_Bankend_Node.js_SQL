@@ -513,6 +513,10 @@ exports.generateInvoiceNumber = async (req, res) => {
 //         res.status(500).json({ message: 'Internal Server Error' });
 //     }
 // };
+
+
+
+
 exports.createInvoice = async (req, res) => {
     try {
         const { customer_name, phone, products, payment_status, payment_method } = req.body;
