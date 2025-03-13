@@ -12,6 +12,6 @@ const { authMiddleware, adminOnly, limiter, adminOrStaff } = require("../middlew
 // router.get("/income-report/:type", getIncomeReport);
 
 
-router.get("/income-report",getIncomeReport );
+router.get("/income-report",authMiddleware,adminOnly,getIncomeReport );
 
 module.exports = router;
