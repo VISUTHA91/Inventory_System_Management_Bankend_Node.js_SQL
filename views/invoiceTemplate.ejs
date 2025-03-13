@@ -5,39 +5,97 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invoice</title>
     <style>
-        body { font-family: Arial, sans-serif; }
-        .invoice-box { max-width: 800px; margin: auto; padding: 30px; border: 1px solid #eee; }
-        table { width: 100%; border-collapse: collapse; }
-        table th, table td { border: 1px solid #ddd; padding: 8px; }
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+        .invoice-box { max-width: 800px; margin: auto; padding: 20px; border: 1px solid #ddd; }
+        h2, h3 { text-align: center; margin-bottom: 5px; }
+        .invoice-header { text-align: center; margin-bottom: 15px; }
+        .invoice-header p { margin: 3px 0; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        table th, table td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        .total-section { text-align: right; font-size: 16px; font-weight: bold; margin-top: 10px; }
+        .note { text-align: center; color: red; margin-top: 15px; font-size: 12px; }
     </style>
 </head>
 <body>
     <div class="invoice-box">
-        <h2>Invoice #<%= invoice.invoice_number %></h2>
-        <p><strong>Customer:</strong> <%= invoice.customer_name %> | <%= invoice.phone %></p>
-        <p><strong>Date:</strong> <%= invoice.invoice_created_at %></p>
+        <!-- Pharmacy Details -->
+        <div class="invoice-header">
+            <h2><%= invoice.shop.pharmacy_name %></h2>
+            <p><strong>Address:</strong> <%= invoice.shop.pharmacy_address %></p>
+            <p><strong>GST:</strong> <%= invoice.shop.owner_GST_number %> | <strong>Pincode:</strong> <%= invoice.shop.pincode %></p>
+        </div>
 
+        <!-- Invoice Details -->
+        <h3>Invoice #<%= invoice.invoice_number %></h3>
+        <p><strong>Invoice Date:</strong> 
+            <%= (() => { 
+                const date = new Date(invoice.invoice_created_at);
+                const options = { weekday: 'short', month: 'short', day: '2-digit', year: 'numeric' };
+                
+                // Format the date and remove all commas before splitting
+                const formattedDate = date.toLocaleDateString('en-US', options).replace(/,/g, '');
+                const formattedDateArray = formattedDate.split(' ');
+        
+                const weekday = formattedDateArray[0]; // "Wed"
+                const month = formattedDateArray[1];   // "Mar"
+                const day = formattedDateArray[2];     // "12"
+                const year = formattedDateArray[3];    // "2025"
+                
+                return `${weekday} | ${month}-${day}-${year} | ${date.toTimeString().split(' ')[0]}`;
+            })() %>
+        </p>
+        
+        
+
+
+        <!-- Customer Details -->
+        <p><strong>Customer Name:</strong> <%= invoice.customer_name || "-" %></p>
+        <p><strong>Phone:</strong> <%= invoice.phone || "-" %> | <strong>Email:</strong> <%= invoice.email || "-" %></p>
+        <p><strong>Address:</strong> <%= invoice.address || "-" %></p>
+
+        <!-- Products Table -->
         <table>
             <thead>
                 <tr>
-                    <th>Product</th>
-                    <th>Quantity</th>
-                    <th>Price</th>
-                    <th>Total</th>
+                    <th>#</th>
+                    <th>Product Name</th>
+                    <th>Batch</th>
+                    <th>Expiry</th>
+                    <th>Unit Price</th>
+                    <th>GST%</th>
+                    <!-- <th>GST Amount</th> -->
+                    <th>Qty</th>
+                    <!-- <th>Amount</th> -->
+                    <th>Net Amount</th>
                 </tr>
             </thead>
             <tbody>
-                <% invoice.products.forEach(product => { %>
+                <% invoice.products.forEach((product, index) => { %>
                 <tr>
+                    <td><%= index + 1 %></td>
                     <td><%= product.product_name %></td>
+                    <td><%= product.product_batch_no %></td>
+                    <td><%= product.expiry_date %></td>
+                    <td>₹<%= parseFloat(product.unit_price).toFixed(2) %></td>
+                    <!-- <td><%= parseFloat(product.gst_percentage).toFixed(2) %>%</td> -->
+                    <td><%= product.gst_percentage % 1 === 0 ? product.gst_percentage : parseFloat(product.gst_percentage).toFixed(2) %>%</td>
+
+                    <!-- <td>₹<%= parseFloat(product.gst_amount).toFixed(2) %></td> -->
                     <td><%= product.product_quantity %></td>
-                    <td>₹<%= product.selling_price %></td>
-                    <td>₹<%= product.total_product_price %></td>
+                    <!-- <td>₹<%= parseFloat(product.unit_price_display).toFixed(2) %></td> -->
+                    <td>₹<%= parseFloat(product.total_product_price).toFixed(2) %></td>
                 </tr>
                 <% }) %>
             </tbody>
         </table>
-        <h3>Total: ₹<%= invoice.final_price %></h3>
+
+        <!-- Total Amount -->
+        <div class="total-section">
+            <p>Total Price: ₹<%= invoice.total_price ? parseFloat(invoice.total_price).toFixed(2) : "0.00" %></p>
+        </div>
+
+        <!-- Note -->
+        <p class="note">Sales Return against Bill and less than 30 days only</p>
     </div>
 </body>
 </html>

@@ -16,11 +16,11 @@ router.get('/invoiceall', authMiddleware,adminOrStaff,invoiceController.getAllIn
 
 // Get Invoice by ID
 router.get('/invoicebyid/:id', authMiddleware,adminOrStaff,invoiceController.getInvoiceById);
-// size=A4 / Size=A5 - correctly worked - pdf
-router.get('/invoicebyid/pdfdownload/:id', authMiddleware,adminOnly,invoiceController.downloadInvoicePdf); 
+// size=A4 / Size=A5 - correctly worked - pdf format
+router.get('/invoicebyid/pdfdow/:id', authMiddleware,adminOnly,invoiceController.downloadInvoicePdf); 
 
-//html&css working
-router.get('/invoice/:id/pdf', invoiceController.generateInvoicePDF);
+//html&css format download pdf
+router.get('/invoicebyid/pdfdownload/:id', invoiceController.generateInvoicePDF);
 router.get('/invoice/:invoice_number',invoiceController.getInvoiceDetails);
 
 
@@ -28,7 +28,7 @@ router.get('/invoice/:invoice_number',invoiceController.getInvoiceDetails);
 router.get('/invoice_total_amount', invoiceController.getTotalInvoiceAmount);
 
 // Route to fetch total unique customer count
-router.get('/customers/count', invoiceController.getTotalCustomers);
+// router.get('/customers/count', invoiceController.getTotalCustomers);
 
 
 // Update Invoice
