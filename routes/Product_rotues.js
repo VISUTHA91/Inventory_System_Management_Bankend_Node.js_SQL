@@ -25,8 +25,8 @@ router.get('/sup_cat_pro/:supplier_id', authMiddleware, adminOnly, productContro
 
 router.get('/stock_list_product',  productController.getAllProducts_stock_search);
 //(stock list)
-router.get("/downloadStockPDF",authMiddleware, adminOnly, productController.downloadStockPDF);
-router.get("/downloadStockCSV", authMiddleware, adminOnly,productController.downloadStockCSV);
+router.get("/downloadStockPDF", productController.downloadStockPDF);
+router.get("/downloadStockCSV",productController.downloadStockCSV);
 //download the stock report 
 
 
