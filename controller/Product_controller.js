@@ -340,6 +340,8 @@ static async downloadStockCSV(req, res) {
         const { status, start_date, end_date } = req.query;
         
         const products = await Product.stockfetchAllpro(status, null, start_date, end_date, null);
+        console.log("Total Records Fetched:", products.length);
+        console.log("Fetched Products:", products);
 
         if (products.length === 0) {
             return res.status(404).json({ message: 'No products found' });
