@@ -6,6 +6,8 @@ const { authMiddleware, adminOnly, adminOrStaff } = require("../middleware/auth_
 // Create a new customer
 router.post('/custinsert',  authMiddleware,adminOrStaff,customerController.createCustomer);
 
+router.get('/cus_total_count',  authMiddleware,adminOrStaff,customerController.getTotalCustomers);
+
 
 
 // Get all customers

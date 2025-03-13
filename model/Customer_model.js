@@ -203,6 +203,23 @@ class Customer {
     static async delete(id) {
         await Customer.query('DELETE FROM customer_table WHERE customer_id = ?', [id]);
     }
+
+// Fetch total customers from the customer_table
+static fetchTotalCustomers() {
+    return new Promise((resolve, reject) => {
+        const query = `SELECT COUNT(*) AS total_customers FROM customer_table;`;
+
+        db.query(query, (err, result) => {
+            if (err) {
+                console.error('Database error:', err);
+                return reject(new Error('Error fetching total customers from the database'));
+            }
+            resolve(result[0].total_customers);
+        });
+    });
+}
+
+    
 }
 
 module.exports = Customer;

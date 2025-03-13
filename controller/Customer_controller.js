@@ -148,3 +148,22 @@ exports.deleteCustomer = async (req, res) => {
         res.status(500).json({ error: 'Failed to delete customer' });
     }
 };
+
+
+// Get total customer count (including all customers)
+exports.getTotalCustomers = async (req, res) => {
+    Customer.fetchTotalCustomers()
+        .then(total => {
+            res.status(200).json({
+                message: 'Total customer count fetched successfully',
+                total_customers: total
+            });
+        })
+        .catch(err => {
+            console.error('Error fetching total customers:', err);
+            res.status(500).json({
+                message: 'Error fetching total customers',
+                error: err.message
+            });
+        });
+};

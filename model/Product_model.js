@@ -454,20 +454,6 @@ static getProductCount(req, res) {
 
 
 
-// Helper functions for selling price calculation and stock status
-static calculateSellingPrice(productPrice, productDiscount) {
-    const price = parseFloat(productPrice || 0);
-    const discount = (price * parseFloat(productDiscount || 0)) / 100;
-    return (price - discount).toFixed(2); // Round to 2 decimal places
-}
-
-
-static calculateFinalSellingPrice(sellingPrice, gst) {
-    console.log(sellingPrice, gst)
-    const gstAmount = (parseFloat(sellingPrice || 0) * parseFloat(gst || 0)) / 100;
-    return (parseFloat(sellingPrice) + gstAmount).toFixed(2); // Round to 2 decimal places
-}
-
 
 static determineStockStatus(quantity) {
     if (quantity === 0) return 'Out of Stock';
@@ -476,20 +462,23 @@ static determineStockStatus(quantity) {
 }
 
 
-    static findByAttributes(product_name, product_batch_no, expiry_date, product_price) {
+    static findByAttributes(product_name, product_batch_no, expiry_date, supplier_price,selling_price) {
         const query = `
             SELECT * FROM product_table 
             WHERE LOWER(product_name) = LOWER(?) 
               AND LOWER(product_batch_no) = LOWER(?) 
               AND DATE(expiry_date) = DATE(?) 
-              AND product_price = ?
+              AND supplier_price = ?
+              AND selling_price = ?
+              AND is_deleted = 0
         `;
         return new Promise((resolve, reject) => {
             db.query(query, [
                 product_name.trim(),  // Ensure it's a string and trimmed
                 product_batch_no.trim(),  // Ensure it's a string and trimmed
                 expiry_date,  // Date field, assumed to be valid
-                product_price,  // Numeric field
+                supplier_price, 
+                selling_price // Numeric field
             ], (err, result) => {
                 if (err) reject(err);
                 else resolve(result);

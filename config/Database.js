@@ -11,7 +11,8 @@ const connection = mysql.createPool({
   database: "inventory_system",  
   waitForConnections: true,
   connectionLimit: 100, // Increased connection limit (adjust this as needed)
-  queueLimit: 0
+  queueLimit: 0,
+  connectTimeout: 60000 // 60 seconds
 });
 
 // Connect to the database

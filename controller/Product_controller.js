@@ -54,84 +54,7 @@ static getAllProducts_stock_search(req, res) {
 
 
 //stock report and filtering products correctly work
-// static async downloadStockPDF(req, res) { 
-//     try {
-//         const { status, start_date, end_date } = req.query;
-//         const products = await Product.stockfetchAllpro(status, null, start_date, end_date, null);
 
-//         if (products.length === 0) {
-//             return res.status(404).json({ message: 'No products found' });
-//         }
-
-//         // Create PDF
-//         const doc = new PDFDocument({ margin: 30 });
-//         const filePath = `./stock_report_${Date.now()}.pdf`;
-//         const stream = fs.createWriteStream(filePath);
-//         doc.pipe(stream);
-
-//         // ** Title - Centered Properly **
-//         doc.fontSize(20).text('Stock Report', { align: 'center' });
-//         doc.moveDown(2);
-
-//         // ** Define Proper Column Positions **
-//         const startX = 50;
-//         const colWidths = [150, 150, 120, 120, 120, 80]; // Adjusted column spacing
-//         const headers = ['Product Name', 'Category', 'Stock Status', 'Batch No', 'Supplier', 'Quantity'];
-
-//         // ** Print Table Headers (Properly Aligned) **
-//         let currentX = startX;
-//         doc.font('Helvetica-Bold').fontSize(12);
-//         headers.forEach((header, index) => {
-//             doc.text(header, currentX, doc.y, { width: colWidths[index], align: 'center' });
-//             currentX += colWidths[index];
-//         });
-
-//         doc.moveDown(0.5);
-        
-//         // ** Draw a Line Under Headers **
-//         doc.moveTo(startX, doc.y).lineTo(700, doc.y).stroke();
-//         doc.moveDown();
-
-//         // ** Print Product Data (Aligned Properly) **
-//         doc.font('Helvetica').fontSize(10);
-//         products.forEach((product) => {
-//             let yPos = doc.y;  // Capture current Y position
-//             currentX = startX;
-
-//             doc.text(product.product_name, currentX, yPos, { width: colWidths[0], align: 'center' });
-//             currentX += colWidths[0];
-
-//             doc.text(product.product_category, currentX, yPos, { width: colWidths[1], align: 'center' });
-//             currentX += colWidths[1];
-
-//             doc.text(product.stock_status, currentX, yPos, { width: colWidths[2], align: 'center' });
-//             currentX += colWidths[2];
-
-//             doc.text(product.product_batch_no, currentX, yPos, { width: colWidths[3], align: 'center' });
-//             currentX += colWidths[3];
-
-//             doc.text(product.supplier, currentX, yPos, { width: colWidths[4], align: 'center' });
-//             currentX += colWidths[4];
-
-//             doc.text(product.product_quantity.toString(), currentX, yPos, { width: colWidths[5], align: 'center' });
-
-//             doc.moveDown(); // Move to the next line
-//         });
-
-//         doc.end();
-
-//         stream.on('finish', () => {
-//             res.download(filePath, 'Stock_Report.pdf', (err) => {
-//                 if (err) console.error('Error sending file:', err);
-//                 fs.unlinkSync(filePath);
-//             });
-//         });
-
-//     } catch (err) {
-//         console.error('Error generating PDF:', err);
-//         res.status(500).json({ message: 'Error generating PDF' });
-//     }
-// }
 static downloadStockPDF = async (req, res) => {
     try {
         const { status, start_date, end_date } = req.query;
@@ -427,51 +350,62 @@ static getProductCount(req, res) {
 
     
 
+
+     
 static async createProduct(req, res) {
     const productData = req.body;
 
-    console.log("product data", req.body);
+    console.log("Product data received:", req.body);
 
-    if (!productData.product_name || !productData.product_price || !productData.product_quantity ) {
+    if (!productData.product_name || !productData.supplier_price || !productData.product_quantity || !productData.product_price || !productData.selling_price) {
         return res.status(400).json({ message: 'Missing required fields.' });
     }
 
+     // Convert MFD & expiry_date to Date objects
+     const MFD = new Date(productData.MFD);
+     const expiryDate = new Date(productData.expiry_date);
+ 
+     // ✅ Validate that MFD is before expiry date
+     if (MFD >= expiryDate) {
+         return res.status(400).json({ message: "Manufacturing Date (MFD) must be before Expiry Date." });
+     }
+ 
+
     try {
-        // Calculate the selling price and final selling price
-        const sellingPrice = Product.calculateSellingPrice(
-            productData.product_price,
-            productData.product_discount
-        );
+        const supplierPrice = parseFloat(productData.supplier_price);
+        const productPrice = parseFloat(productData.product_price);
+        const sellingPrice = parseFloat(productData.selling_price);
 
-        const finalSellingPrice = Product.calculateFinalSellingPrice(
-            sellingPrice,
-            productData.GST
-        );
+        // Ensure selling price is valid
+        if (sellingPrice > productPrice) {
+            return res.status(400).json({ message: 'Selling price cannot be higher than product price (MRP).' });
+        }
+        if (sellingPrice < supplierPrice) {
+            return res.status(400).json({ message: 'Selling price cannot be lower than supplier price.' });
+        }
 
-        // Assign the final selling price to product data
-        productData.selling_price = finalSellingPrice;
+        // Calculate discount in rupees (MRP - Selling Price)
+        productData.product_discount = (productPrice - sellingPrice).toFixed(2);
 
-        // Check if the product already exists based on product_name, product_batch_no, expiry_date, and product_price
+        // Check if the product already exists
         const existingProduct = await Product.findByAttributes(
             productData.product_name,
             productData.product_batch_no,
             productData.expiry_date,
-            productData.product_price
+            productData.supplier_price,
+            productData.selling_price
         );
 
         if (existingProduct && existingProduct.length > 0) {
-            // If the product exists, update the quantity and other relevant fields
             const product = existingProduct[0];
             const updatedQuantity = product.product_quantity + productData.product_quantity;
             const stockStatus = Product.determineStockStatus(updatedQuantity);
 
-            // Update the existing product with the new data
             await Product.updateQuantity(product.id, updatedQuantity, stockStatus);
             return res.status(200).json({ message: 'Product updated successfully.' });
         } else {
-            // If the product does not exist, determine stock status for the new product
-            const stockStatus = Product.determineStockStatus(productData.product_quantity);
-            productData.stock_status = stockStatus;
+            // Determine stock status for new product
+            productData.stock_status = Product.determineStockStatus(productData.product_quantity);
 
             // Insert the new product into the database
             await Product.create(productData);
@@ -483,8 +417,6 @@ static async createProduct(req, res) {
     }
 }
 
-     
-   
 
 
 
@@ -495,7 +427,67 @@ static async createProduct(req, res) {
 
 
 
-static async updateProduct(req, res) {
+
+// static async updateProduct(req, res) {
+//     try {
+//         const productId = req.params.id;
+//         const updatedData = req.body;
+
+//         console.log('Incoming Update Request Data:', updatedData);
+
+//         // Validate required fields
+//         if (!updatedData.product_name || !updatedData.product_category || !updatedData.product_quantity) {
+//             return res.status(400).json({
+//                 message: 'Missing required fields (product_name, product_category, product_quantity).',
+//             });
+//         }
+
+//         // Fetch existing product data for comparison
+//         const existingProduct = await Product.findById(productId);
+
+//         if (!existingProduct) {
+//             return res.status(404).json({ message: 'Product not found.' });
+//         }
+
+//         // Calculate selling price if product_price or product_discount is provided
+//         let sellingPrice = existingProduct.selling_price; // Default to existing value
+//         if (updatedData.product_price || updatedData.product_discount) {
+//             sellingPrice = Product.calculateSellingPrice(
+//                 updatedData.product_price || existingProduct.product_price,
+//                 updatedData.product_discount || existingProduct.product_discount
+//             );
+//         }
+
+//         // Calculate final selling price with GST
+//         const finalSellingPrice = Product.calculateFinalSellingPrice(
+//             sellingPrice,
+//             updatedData.GST || existingProduct.GST
+//         );
+
+//         // Assign calculated selling price to updatedData
+//         updatedData.selling_price = finalSellingPrice;
+
+//         // Determine stock status based on product_quantity
+//         const stockStatus = Product.determineStockStatus(updatedData.product_quantity);
+//         updatedData.stock_status = stockStatus;
+
+//         console.log('Updated Data for Query:', updatedData);
+
+//         // Update product in the database
+//         const result = await Product.update(productId, updatedData);
+
+//         if (result.affectedRows === 0) {
+//             return res.status(404).json({ message: 'Product not found or already deleted.' });
+//         }
+
+//         return res.status(200).json({ message: 'Product updated successfully.' });
+//     } catch (err) {
+//         console.error('Error updating product:', err);
+//         return res.status(500).json({ message: 'Error updating product.', error: err.message });
+//     }
+// }
+
+static async updateProduct(req, res) { 
     try {
         const productId = req.params.id;
         const updatedData = req.body;
@@ -509,34 +501,15 @@ static async updateProduct(req, res) {
             });
         }
 
-        // Fetch existing product data for comparison
+        // Fetch existing product data for validation
         const existingProduct = await Product.findById(productId);
 
         if (!existingProduct) {
             return res.status(404).json({ message: 'Product not found.' });
         }
 
-        // Calculate selling price if product_price or product_discount is provided
-        let sellingPrice = existingProduct.selling_price; // Default to existing value
-        if (updatedData.product_price || updatedData.product_discount) {
-            sellingPrice = Product.calculateSellingPrice(
-                updatedData.product_price || existingProduct.product_price,
-                updatedData.product_discount || existingProduct.product_discount
-            );
-        }
-
-        // Calculate final selling price with GST
-        const finalSellingPrice = Product.calculateFinalSellingPrice(
-            sellingPrice,
-            updatedData.GST || existingProduct.GST
-        );
-
-        // Assign calculated selling price to updatedData
-        updatedData.selling_price = finalSellingPrice;
-
         // Determine stock status based on product_quantity
-        const stockStatus = Product.determineStockStatus(updatedData.product_quantity);
-        updatedData.stock_status = stockStatus;
+        updatedData.stock_status = Product.determineStockStatus(updatedData.product_quantity);
 
         console.log('Updated Data for Query:', updatedData);
 
@@ -553,8 +526,7 @@ static async updateProduct(req, res) {
         return res.status(500).json({ message: 'Error updating product.', error: err.message });
     }
 }
-
-   
+ 
    
       
    
