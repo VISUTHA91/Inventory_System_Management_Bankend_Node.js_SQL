@@ -1,8 +1,9 @@
 
 
 
-const ReportModel = require("../model/Report_model");
-//already work correck
+// const ReportModel = require("../model/Report_model");
+
+
 // const getIncomeReport = async (req, res) => {
 //     try {
 //         console.log("Report Generated At:", new Date().toLocaleString());
@@ -17,28 +18,38 @@ const ReportModel = require("../model/Report_model");
 //         let total_income = 0;
 //         let total_cost = 0;
 
-//         // Loop through the invoices
 //         for (const invoice of reportData) {
 //             let productIds = [];
 //             let quantities = [];
 
 //             try {
+//                 // ✅ Ensure productIds is always an array
 //                 productIds = JSON.parse(invoice.product_id || "[]");
+//                 if (!Array.isArray(productIds)) {
+//                     productIds = [productIds]; // Convert single value to an array
+//                 }
+
 //                 quantities = JSON.parse(invoice.quantity || "[]");
+//                 if (!Array.isArray(quantities)) {
+//                     quantities = [quantities]; // Convert single value to an array
+//                 }
 //             } catch (err) {
 //                 console.error("Invalid JSON format for product_id or quantity:", err);
 //                 continue;
 //             }
 
-//             total_income += parseFloat(invoice.final_price || 0);
+//             total_income += parseFloat(invoice.total_price || 0);
 
-//             // Fetch supplier prices in parallel
+//             // ✅ Fetch supplier prices safely
 //             const supplierPrices = await Promise.all(
-//                 productIds.map(productId => ReportModel.getSupplierPriceByProductId(productId))
+//                 productIds.map(async (productId) => {
+//                     return await ReportModel.getSupplierPriceByProductId(productId);
+//                 })
 //             );
+
+//             console.log("Product IDs:", productIds);
 //             console.log("Supplier Prices:", supplierPrices);
 
-//             // Calculate invoice cost
 //             let invoice_cost = 0;
 //             for (let i = 0; i < productIds.length; i++) {
 //                 const supplier_price = supplierPrices[i] || 0;
@@ -65,10 +76,17 @@ const ReportModel = require("../model/Report_model");
 //             success: false,
 //             message: "Error retrieving report",
 //             error: error.message,
-//         });
-//     }
+//         });
+//     }
 // };
 
+// module.exports = { getIncomeReport };
+
+
+
+
+
+const ReportModel = require("../model/Report_model");
 
 const getIncomeReport = async (req, res) => {
     try {
@@ -104,7 +122,7 @@ const getIncomeReport = async (req, res) => {
                 continue;
             }
 
-            total_income += parseFloat(invoice.final_price || 0);
+            total_income += parseFloat(invoice.total_price || 0);
 
             // ✅ Fetch supplier prices safely
             const supplierPrices = await Promise.all(
@@ -126,13 +144,17 @@ const getIncomeReport = async (req, res) => {
             total_cost += invoice_cost;
         }
 
-        const total_profit = total_income - total_cost;
+        // ✅ Fetch total expense amount from the expense_table
+        const total_expense = await ReportModel.getExpenseAmount(interval);
+
+        const total_profit = total_income - total_cost - total_expense;
 
         res.status(200).json({
             success: true,
             data: {
                 total_income: total_income.toFixed(2),
                 total_cost: total_cost.toFixed(2),
+                expense: total_expense.toFixed(2),
                 total_profit: total_profit.toFixed(2),
             },
         });
@@ -142,20 +164,13 @@ const getIncomeReport = async (req, res) => {
             success: false,
             message: "Error retrieving report",
             error: error.message,
-        });
-    }
+        });
+    }
 };
 
+
+
 module.exports = { getIncomeReport };
-
-
-
-
-
-
-
-
-
 
 
 
