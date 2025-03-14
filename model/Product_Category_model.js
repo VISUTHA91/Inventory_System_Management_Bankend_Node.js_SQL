@@ -1,49 +1,4 @@
 
-// const db = require('../config/Database');  // Import the db connection
-
-// // Helper function to wrap callback-based queries in a Promise
-// function queryAsync(sql, params) {
-//   return new Promise((resolve, reject) => {
-//     db.query(sql, params, (err, results) => {
-//       if (err) {
-//         reject(err);  // Reject the promise if there is an error
-//       } else {
-//         resolve(results);  // Resolve the promise with the query results
-//       }
-//     });
-//   });
-// }
-
-// class Category {
-//     static async getAll() {
-//         const rows = await queryAsync('SELECT * FROM product_category', []);
-//         return rows;
-//     }
-
-//     static async getById(id) {
-//         const rows = await queryAsync('SELECT * FROM product_category WHERE id = ?', [id]);
-//         return rows[0];
-//     }
-
-//     static async create(data) {
-//         const { category_name, description } = data;
-//         const result = await queryAsync('INSERT INTO product_category (category_name, description) VALUES (?, ?)', [category_name, description]);
-//         return result.insertId;  // Return the insert ID
-//     }
-
-//     static async update(id, data) {
-//         const { category_name, description } = data;
-//         await queryAsync('UPDATE product_category SET category_name = ?, description = ? WHERE id = ?', [category_name, description, id]);
-//     }
-
-//     static async delete(id) {
-//         await queryAsync('DELETE FROM product_category WHERE id = ?', [id]);
-//     }
-// }
-
-// module.exports = Category;
-
-
 
 const db = require('../config/Database'); // Import the database connection
 
@@ -251,21 +206,64 @@ static async filterCategoriesAndProducts({ cat_auto_gen_id, product_name, produc
     return rows;
   }
 
-  static async getAll_page(page, limit) {
-    const offset = (page - 1) * limit; // Calculate offset
+//   static async getAll_page(page, limit) {
+//     const offset = (page - 1) * limit; // Calculate offset
 
-    // Query to fetch paginated categories
-    const rows = await queryAsync(
-        'SELECT * FROM product_category LIMIT ? OFFSET ?', 
-        [limit, offset]
-    );
+//     // Query to fetch paginated categories
+//     const rows = await queryAsync(
+//         'SELECT * FROM product_category LIMIT ? OFFSET ?', 
+//         [limit, offset]
+//     );
 
-    // Query to get total count of categories
-    const totalRows = await queryAsync('SELECT COUNT(*) AS total FROM product_category', []);
-    const totalCategories = totalRows[0].total;
+//     // Query to get total count of categories
+//     const totalRows = await queryAsync('SELECT COUNT(*) AS total FROM product_category', []);
+//     const totalCategories = totalRows[0].total;
 
-    return { categories: rows, totalCategories };
+//     return { categories: rows, totalCategories };
+// }
+
+
+static async getAll_page(page, limit) {
+  const offset = (page - 1) * limit; // Calculate offset
+
+  // Query to fetch paginated categories with their related products
+  const query = `
+      SELECT 
+          c.id AS category_id,
+          c.category_name,
+          c.description AS category_description,
+          c.created_at AS category_created_at,
+          c.updated_at AS category_updated_at,
+          c.cat_auto_gen_id,
+          p.id AS product_id,
+          p.product_name,
+          p.product_description,
+          p.product_price,
+          p.product_quantity,
+          p.stock_status,
+          p.generic_name,
+          p.product_batch_no,
+          p.expiry_date,
+          p.product_discount,
+          p.supplier_price,
+          p.supplier,
+          p.brand_name,
+          p.selling_price,
+          p.GST,
+          p.created_at AS product_created_at,
+          p.updated_at AS product_updated_at,
+          p.deleted_at,
+          p.is_deleted
+      FROM product_category c
+      LEFT JOIN product_table p ON c.id = p.product_category  -- Updated JOIN condition
+      LIMIT ? OFFSET ?;
+  `;
+
+  const rows = await queryAsync(query, [limit, offset]);
+
+  return rows;
 }
+
 
 static async getAllCategoryNames() {  
   const rows = await queryAsync('SELECT category_name FROM product_category', []);

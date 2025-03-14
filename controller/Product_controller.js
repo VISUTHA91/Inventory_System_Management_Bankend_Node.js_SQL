@@ -12,63 +12,229 @@ class ProductController {
 
 
 //stock report and filtering products
-static getAllProducts_stock_search(req, res) {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const status = req.query.status || null;
-    const search = req.query.search || null;
-    const startDate = req.query.start_date || null;
-    const endDate = req.query.end_date || null;
-    const batchNo = req.query.batch_no || null;
+// static getAllProducts_stock_search(req, res) {
+//     const page = parseInt(req.query.page) || 1;
+//     const limit = parseInt(req.query.limit) || 10;
+//     const status = req.query.status || null;
+//     const search = req.query.search || null;
+//     const startDate = req.query.start_date || null;
+//     const endDate = req.query.end_date || null;
+//     const batchNo = req.query.batch_no || null;
 
-    // Fetch products with all filters
-    Product.stockfetchAllpro(status, search, startDate, endDate, batchNo)
-        .then(products => {
-            if (products.length === 0) {
-                return res.status(404).json({ message: 'No products found' });
-            }
+//     // Fetch products with all filters
+//     Product.stockfetchAllpro(status, search, startDate, endDate, batchNo)
+//         .then(products => {
+//             if (products.length === 0) {
+//                 return res.status(404).json({ message: 'No products found' });
+//             }
 
-            // Apply pagination
-            const totalProducts = products.length;
-            const totalPages = Math.ceil(totalProducts / limit);
-            const startIndex = (page - 1) * limit;
-            const paginatedProducts = products.slice(startIndex, startIndex + limit);
+//             // Apply pagination
+//             const totalProducts = products.length;
+//             const totalPages = Math.ceil(totalProducts / limit);
+//             const startIndex = (page - 1) * limit;
+//             const paginatedProducts = products.slice(startIndex, startIndex + limit);
 
-            res.status(200).json({
-                message: 'Products fetched successfully',
-                page: page,
-                limit: limit,
-                totalProducts: totalProducts,
-                totalPages: totalPages,
-                data: paginatedProducts
-            });
-        })
-        .catch(err => {
-            console.error('Error fetching products:', err);
-            res.status(500).json({
-                message: 'Error fetching products',
-                error: err.message
-            });
-        });
-}
+//             res.status(200).json({
+//                 message: 'Products fetched successfully',
+//                 page: page,
+//                 limit: limit,
+//                 totalProducts: totalProducts,
+//                 totalPages: totalPages,
+//                 data: paginatedProducts
+//             });
+//         })
+//         .catch(err => {
+//             console.error('Error fetching products:', err);
+//             res.status(500).json({
+//                 message: 'Error fetching products',
+//                 error: err.message
+//             });
+//         });
+// }
 
 
 //stock report and filtering products correctly work
 
-static downloadStockPDF = async (req, res) => {
+// static downloadStockPDF = async (req, res) => {
+//     try {
+//         const { status, start_date, end_date } = req.query;
+
+//         // Fetch filtered stock data
+//         const products = await Product.stockfetchAllpro(status, null, start_date, end_date, null);
+
+//         if (products.length === 0) {
+//             return res.status(404).json({ message: 'No products found' });
+//         }
+
+//         // Convert product data into an HTML table
+//         let tableRows = '';
+//         products.forEach((product) => {
+//             tableRows += `
+//                 <tr>
+//                     <td>${product.product_name}</td>
+//                     <td>${product.product_category}</td>
+//                     <td>${product.stock_status}</td>
+//                     <td>${product.product_batch_no}</td>
+//                     <td>${product.supplier}</td>
+//                    <td>${product.MFD && !isNaN(new Date(product.MFD)) ? new Date(product.MFD).toLocaleDateString() : 'N/A'}</td>
+//                     <td>${product.expiry_date ? new Date(product.expiry_date).toLocaleDateString() : 'N/A'}</td>
+//                     <td>${product.product_quantity}</td>
+//                 </tr>
+//             `;
+
+//             // console.log("MFD Value:", product.MFD);
+
+//         });
+
+//         // Define HTML structure with CSS for styling
+//         const htmlContent = `
+//         <!DOCTYPE html>
+//         <html>
+//         <head>
+//             <title>Stock Report</title>
+//             <style>
+//                 body { font-family: Arial, sans-serif; padding: 20px; }
+//                 h2 { text-align: center; }
+//                 table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+//                 th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+//                 th { background-color: #f4f4f4; }
+//             </style>
+//         </head>
+//         <body>
+//             <h2>Stock Report</h2>
+//             <table>
+//                 <thead>
+//                     <tr>
+//                         <th>Product Name</th>
+//                         <th>Category</th>
+//                         <th>Stock Status</th>
+//                         <th>Batch No</th>
+//                         <th>Supplier</th>
+//                         <th>MFD</th>
+//                         <th>Expiry Date</th>
+//                         <th>Quantity</th>
+//                     </tr>
+//                 </thead>
+//                 <tbody>
+//                     ${tableRows}
+//                 </tbody>
+//             </table>
+//         </body>
+//         </html>
+//         `;
+
+//         // Generate PDF using Puppeteer
+//         const browser = await puppeteer.launch();
+//         const page = await browser.newPage();
+//         await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+
+//         // Define PDF file path
+//         const filePath = path.join(__dirname, `../../stock_report_${Date.now()}.pdf`);
+
+//         await page.pdf({
+//             path: filePath,
+//             format: 'A4',
+//             printBackground: true,
+//             margin: { top: '20px', bottom: '20px', left: '20px', right: '20px' }
+//         });
+
+//         await browser.close();
+
+//         // Send file to client
+//         res.download(filePath, 'Stock_Report.pdf', (err) => {
+//             if (err) console.error('Error sending file:', err);
+//             fs.unlinkSync(filePath); // Delete the file after download
+//         });
+
+//     } catch (err) {
+//         console.error('Error generating PDF:', err);
+//         res.status(500).json({ message: 'Error generating PDF' });
+//     }
+// };
+
+
+
+
+
+
+// //corrrectly work good wel
+// static async downloadStockCSV(req, res) {
+//     try {
+//         const { status, start_date, end_date } = req.query;
+//         const products = await Product.stockfetchAllpro(status, null, start_date, end_date, null);
+
+//         if (products.length === 0) {
+//             return res.status(404).json({ message: 'No products found' });
+//         }
+
+//         // Define CSV Fields
+//         const fields = ['product_name', 'product_category', 'stock_status', 'product_batch_no', 'supplier', 'product_quantity', 'expiry_date'];
+//         const parser = new Parser({ fields });
+//         const csvData = parser.parse(products);
+
+//         const filePath = `./stock_report_${Date.now()}.csv`;
+//         fs.writeFileSync(filePath, csvData);
+
+//         res.download(filePath, 'Stock_Report.csv', (err) => {
+//             if (err) console.error('Error sending file:', err);
+//             fs.unlinkSync(filePath);
+//         });
+
+//     } catch (err) {
+//         console.error('Error generating CSV:', err);
+//         res.status(500).json({ message: 'Error generating CSV' });
+//     }
+// }
+
+
+
+static async getAllProducts_stock_search(req, res) {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const status = req.query.status || null;
+        const search = req.query.search || null;
+        const startDate = req.query.start_date || null;
+        const endDate = req.query.end_date || null;
+        const batchNo = req.query.batch_no || null;
+
+        const products = await Product.stockfetchAllpro(status, search, startDate, endDate, batchNo);
+
+        if (products.length === 0) {
+            return res.status(404).json({ message: 'No products found' });
+        }
+
+        const totalProducts = products.length;
+        const totalPages = Math.ceil(totalProducts / limit);
+        const startIndex = (page - 1) * limit;
+        const paginatedProducts = products.slice(startIndex, startIndex + limit);
+
+        res.status(200).json({
+            message: 'Products fetched successfully',
+            page,
+            limit,
+            totalProducts,
+            totalPages,
+            data: paginatedProducts
+        });
+    } catch (err) {
+        console.error('Error fetching products:', err);
+        res.status(500).json({ message: 'Error fetching products', error: err.message });
+    }
+}
+
+static async downloadStockPDF(req, res) {
     try {
         const { status, start_date, end_date } = req.query;
-
-        // Fetch filtered stock data
+        console.log("date",start_date,end_date);
         const products = await Product.stockfetchAllpro(status, null, start_date, end_date, null);
 
         if (products.length === 0) {
             return res.status(404).json({ message: 'No products found' });
         }
 
-        // Convert product data into an HTML table
         let tableRows = '';
-        products.forEach((product) => {
+        products.forEach(product => {
             tableRows += `
                 <tr>
                     <td>${product.product_name}</td>
@@ -76,99 +242,112 @@ static downloadStockPDF = async (req, res) => {
                     <td>${product.stock_status}</td>
                     <td>${product.product_batch_no}</td>
                     <td>${product.supplier}</td>
-                   <td>${product.MFD && !isNaN(new Date(product.MFD)) ? new Date(product.MFD).toLocaleDateString() : 'N/A'}</td>
-                    <td>${product.expiry_date ? new Date(product.expiry_date).toLocaleDateString() : 'N/A'}</td>
+                    <td>${product.MFD || 'N/A'}</td>
+                    <td>${product.expiry_date || 'N/A'}</td>
                     <td>${product.product_quantity}</td>
+                  <td> ${Math.round(product.GST)}%</td>
                 </tr>
             `;
-
-            // console.log("MFD Value:", product.MFD);
-
         });
 
-        // Define HTML structure with CSS for styling
+          // **Generate Current Date & Time for Report**
+          const currentDate = new Date();
+          const formattedDate = currentDate.toLocaleDateString('en-GB'); // Format: DD/MM/YYYY
+          const formattedTime = currentDate.toLocaleTimeString(); // Format: HH:MM:SS AM/PM
+
         const htmlContent = `
         <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Stock Report</title>
-            <style>
-                body { font-family: Arial, sans-serif; padding: 20px; }
-                h2 { text-align: center; }
-                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-                th { background-color: #f4f4f4; }
-            </style>
-        </head>
-        <body>
-            <h2>Stock Report</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Product Name</th>
-                        <th>Category</th>
-                        <th>Stock Status</th>
-                        <th>Batch No</th>
-                        <th>Supplier</th>
-                        <th>MFD</th>
-                        <th>Expiry Date</th>
-                        <th>Quantity</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${tableRows}
-                </tbody>
-            </table>
-        </body>
-        </html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Report</title>
+     
+    <style>
+        table {
+            border-collapse: collapse; /* Fixes double border issue */
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid black; /* Adds a single border */
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2; /* Light grey background for headers */
+        }
+
+         .header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+                .report-date {
+                    font-size: 14px;
+                    font-weight: bold;
+                }
+    </style>
+</head>
+<body>
+  <div class="header">
+                <h2>Stock Report</h2>
+                <div class="report-date">Generated on: ${formattedDate} ${formattedTime}</div>
+   </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Product Name</th>
+                <th>Category</th>
+                <th>Stock Status</th>
+                <th>Batch No</th>
+                <th>Supplier</th>
+                <th>MFD</th>
+                <th>Expiry Date</th>
+                <th>Quantity</th>
+                <th>GST%</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${tableRows} <!-- This should be dynamically replaced in your template engine -->
+        </tbody>
+    </table>
+</body>
+</html>
+
         `;
 
-        // Generate PDF using Puppeteer
         const browser = await puppeteer.launch();
         const page = await browser.newPage();
-        await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
-
-        // Define PDF file path
+        await page.setContent(htmlContent);
         const filePath = path.join(__dirname, `../../stock_report_${Date.now()}.pdf`);
 
-        await page.pdf({
-            path: filePath,
-            format: 'A4',
-            printBackground: true,
-            margin: { top: '20px', bottom: '20px', left: '20px', right: '20px' }
-        });
-
+        await page.pdf({ path: filePath, format: 'A4', printBackground: true });
         await browser.close();
 
-        // Send file to client
         res.download(filePath, 'Stock_Report.pdf', (err) => {
             if (err) console.error('Error sending file:', err);
-            fs.unlinkSync(filePath); // Delete the file after download
+            fs.unlinkSync(filePath);
         });
 
     } catch (err) {
         console.error('Error generating PDF:', err);
         res.status(500).json({ message: 'Error generating PDF' });
     }
-};
+}
 
-
-
-
-
-
-//corrrectly work good wel
 static async downloadStockCSV(req, res) {
     try {
         const { status, start_date, end_date } = req.query;
+        
         const products = await Product.stockfetchAllpro(status, null, start_date, end_date, null);
+        console.log("Total Records Fetched:", products.length);
+        console.log("Fetched Products:", products);
 
         if (products.length === 0) {
             return res.status(404).json({ message: 'No products found' });
         }
 
-        // Define CSV Fields
-        const fields = ['product_name', 'product_category', 'stock_status', 'product_batch_no', 'supplier', 'product_quantity', 'expiry_date'];
+        const fields = ['product_name', 'product_category', 'stock_status', 'product_batch_no', 'supplier', 'product_quantity', 'expiry_date','GST'];
         const parser = new Parser({ fields });
         const csvData = parser.parse(products);
 
@@ -185,10 +364,6 @@ static async downloadStockCSV(req, res) {
         res.status(500).json({ message: 'Error generating CSV' });
     }
 }
-
-
-
-
 
 
 

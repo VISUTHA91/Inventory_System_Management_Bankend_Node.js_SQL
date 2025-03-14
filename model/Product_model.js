@@ -1,93 +1,207 @@
 const db = require("../config/Database");
+const moment = require('moment-timezone');
 
 // models/productModel.js
 class Product {
 
 //stock for fillter option in product page
-static stockfetchAllpro(status = null, search = null, startDate = null, endDate = null, batchNo = null) {
-    return new Promise((resolve, reject) => {
-        let query = `
-        SELECT 
-            p.id,
-            p.product_name,
-            c.category_name AS product_category,
-            p.product_quantity,
-            p.product_price,
-            p.product_description,
-            p.generic_name,                
-            p.product_batch_no,
-            p.expiry_date,
-            p.product_discount,
-            p.supplier_price,
-            s.company_name AS supplier,
-            p.brand_name,
-            p.selling_price,
-            p.GST,
-            p.stock_status,
-            p.MFD,
-            p.created_at,
-            p.updated_at,
-            p.deleted_at,
-            p.is_deleted
-        FROM 
-            product_table p
-        JOIN 
-            product_category c ON p.product_category = c.id
-        JOIN 
-            supplier s ON p.supplier = s.supplier_id
-        WHERE 
-            p.is_deleted = 0
-        `;
+    // static stockfetchAllpro(status = null, search = null, startDate = null, endDate = null, batchNo = null) {
+    //     return new Promise((resolve, reject) => {
+    //         let query = `
+    //         SELECT 
+    //             p.id,
+    //             p.product_name,
+    //             c.category_name AS product_category,
+    //             p.product_quantity,
+    //             p.product_price,
+    //             p.product_description,
+    //             p.generic_name,                
+    //             p.product_batch_no,
+    //             p.expiry_date,
+    //             p.product_discount,
+    //             p.supplier_price,
+    //             s.company_name AS supplier,
+    //             p.brand_name,
+    //             p.selling_price,
+    //             p.GST,
+    //             p.stock_status,
+    //             p.MFD,
+    //             p.created_at,
+    //             p.updated_at,
+    //             p.deleted_at,
+    //             p.is_deleted
+    //         FROM 
+    //             product_table p
+    //         JOIN 
+    //             product_category c ON p.product_category = c.id
+    //         JOIN 
+    //             supplier s ON p.supplier = s.supplier_id
+    //         WHERE 
+    //             p.is_deleted = 0
+    //         `;
 
-        const queryParams = [];
+    //         const queryParams = [];
 
-        // Apply status filter if provided
-        if (status) {
-            query += ` AND p.stock_status = ? `;
-            queryParams.push(status);
-        }
+    //         // Apply status filter if provided
+    //         if (status) {
+    //             query += ` AND p.stock_status = ? `;
+    //             queryParams.push(status);
+    //         }
 
-        // Apply search filter if provided (for name, category, expiry date, supplier, and batch number)
-        if (search) {
-            query += ` AND (
-                p.product_name LIKE ? 
-                OR c.category_name LIKE ? 
-                OR p.expiry_date LIKE ? 
-                OR s.company_name LIKE ?
-                OR p.product_batch_no LIKE ?
-            )`;
-            const searchPattern = `%${search}%`;
-            queryParams.push(searchPattern, searchPattern, searchPattern, searchPattern, searchPattern);
-        }
+    //         // Apply search filter if provided (for name, category, expiry date, supplier, and batch number)
+    //         if (search) {
+    //             query += ` AND (
+    //                 p.product_name LIKE ? 
+    //                 OR c.category_name LIKE ? 
+    //                 OR p.expiry_date LIKE ? 
+    //                 OR s.company_name LIKE ?
+    //                 OR p.product_batch_no LIKE ?
+    //             )`;
+    //             const searchPattern = `%${search}%`;
+    //             queryParams.push(searchPattern, searchPattern, searchPattern, searchPattern, searchPattern);
+    //         }
 
-        // Apply expiry date range filter if provided
-        if (startDate && endDate) {
-            query += ` AND p.expiry_date BETWEEN ? AND ? `;
-            queryParams.push(startDate, endDate);
-        }
+    //         // Apply expiry date range filter if provided
+    //         if (startDate && endDate) {
+    //             query += ` AND p.expiry_date BETWEEN ? AND ? `;
+    //             queryParams.push(startDate, endDate);
+    //         }
 
-        // Apply batch number filter if provided
-        if (batchNo) {
-            query += ` AND p.product_batch_no = ? `;
-            queryParams.push(batchNo);
-        }
+    //         // Apply batch number filter if provided
+    //         if (batchNo) {
+    //             query += ` AND p.product_batch_no = ? `;
+    //             queryParams.push(batchNo);
+    //         }
 
-        query += ` ORDER BY p.expiry_date ASC`;
+    //         query += ` ORDER BY p.expiry_date ASC`;
 
-        db.query(query, queryParams, (err, result) => {
-            if (err) {
-                console.error('Database error:', err);
-                return reject(new Error('Error fetching products from the database'));
+    //         db.query(query, queryParams, (err, result) => {
+    //             if (err) {
+    //                 console.error('Database error:', err);
+    //                 return reject(new Error('Error fetching products from the database'));
+    //             }
+
+    //             if (!result || result.length === 0) {
+    //                 return resolve([]);
+    //             }
+
+    //             // Format dates to IST (Asia/Kolkata) with correct time format
+    //             const formattedProducts = result.map(product => ({
+    //                 ...product,
+    //                 expiry_date: product.expiry_date
+    //                     ? moment(product.expiry_date).tz('Asia/Kolkata').format('YYYY-MM-DD ')
+    //                     : null,
+    //                 MFD: product.MFD
+    //                     ? moment(product.MFD).tz('Asia/Kolkata').format('YYYY-MM-DD ')
+    //                     : null,
+    //                 created_at: product.created_at
+    //                     ? moment(product.created_at).tz('Asia/Kolkata').format('YYYY-MM-DD HH:mm:ss')
+    //                     : null,
+    //                 updated_at: product.updated_at
+    //                     ? moment(product.updated_at).tz('Asia/Kolkata').format('YYYY-MM-DD HH:mm:ss')
+    //                     : null
+    //             }));
+
+    //             resolve(formattedProducts);
+    //         });
+    //     });
+    // }
+
+
+    static stockfetchAllpro(status = null, search = null, startDate = null, endDate = null, batchNo = null) {
+        return new Promise((resolve, reject) => {
+            let query = `
+            SELECT 
+                p.id,
+                p.product_name,
+                c.category_name AS product_category,
+                p.product_quantity,
+                p.product_price,
+                p.product_description,
+                p.generic_name,                
+                p.product_batch_no,
+                p.expiry_date,
+                p.product_discount,
+                p.supplier_price,
+                s.company_name AS supplier,
+                p.brand_name,
+                p.selling_price,
+                p.GST,
+                p.stock_status,
+                p.MFD,
+                p.created_at,
+                p.updated_at,
+                p.deleted_at,
+                p.is_deleted
+            FROM 
+                product_table p
+            JOIN 
+                product_category c ON p.product_category = c.id
+            JOIN 
+                supplier s ON p.supplier = s.supplier_id
+            WHERE 
+                p.is_deleted = 0
+            `;
+
+            const queryParams = [];
+
+            if (status) {
+                query += ` AND p.stock_status = ? `;
+                queryParams.push(status);
             }
 
-            if (!result || result.length === 0) {
-                return resolve([]);
+            if (search) {
+                query += ` AND (
+                    p.product_name LIKE ? 
+                    OR c.category_name LIKE ? 
+                    OR p.expiry_date LIKE ? 
+                    OR s.company_name LIKE ?
+                    OR p.product_batch_no LIKE ?
+                )`;
+                const searchPattern = `%${search}%`;
+                queryParams.push(searchPattern, searchPattern, searchPattern, searchPattern, searchPattern);
             }
 
-            resolve(result);
+            // if (startDate && endDate) {
+            //     query += ` AND p.expiry_date BETWEEN ? AND ? `;
+            //     queryParams.push(startDate, endDate);
+            // }
+
+            if (startDate && endDate) {
+                query += ` AND p.created_at BETWEEN ? AND ? `;
+                queryParams.push(startDate, endDate);
+            }
+
+            if (batchNo) {
+                query += ` AND p.product_batch_no = ? `;
+                queryParams.push(batchNo);
+            }
+
+            query += ` ORDER BY p.expiry_date ASC`;
+
+            db.query(query, queryParams, (err, result) => {
+                if (err) {
+                    console.error('Database error:', err);
+                    return reject(new Error('Error fetching products from the database'));
+                }
+
+                if (!result || result.length === 0) {
+                    return resolve([]);
+                }
+
+                const formattedProducts = result.map(product => ({
+                    ...product,
+                    expiry_date: product.expiry_date ? moment(product.expiry_date).tz('Asia/Kolkata').format('YYYY-MM-DD') : null,
+                    MFD: product.MFD ? moment(product.MFD).tz('Asia/Kolkata').format('YYYY-MM-DD') : null,
+                    created_at: product.created_at ? moment(product.created_at).tz('Asia/Kolkata').format('YYYY-MM-DD HH:mm:ss') : null,
+                    updated_at: product.updated_at ? moment(product.updated_at).tz('Asia/Kolkata').format('YYYY-MM-DD HH:mm:ss') : null
+                }));
+
+                resolve(formattedProducts);
+            });
         });
-    });
-}
+    }
+
 
 // static fetchBySupplier_pro_cat(supplierId) {
 //     return new Promise((resolve, reject) => {
@@ -213,6 +327,7 @@ static getProductCount(req, res) {
 
     
 
+    
     static fetchAllpro() {
         return new Promise((resolve, reject) => {
             const query = `
@@ -225,7 +340,7 @@ static getProductCount(req, res) {
                 p.product_description,
                 p.generic_name,                
                 p.product_batch_no,
-                p.expiry_date,
+                p.expiry_date, 
                 p.product_discount,
                 p.supplier_price,
                 s.company_name AS supplier,
@@ -233,7 +348,7 @@ static getProductCount(req, res) {
                 p.selling_price,
                 p.GST,
                 p.stock_status,
-                p.MFD,
+                p.MFD, 
                 p.created_at,
                 p.updated_at,
                 p.deleted_at,
@@ -248,18 +363,18 @@ static getProductCount(req, res) {
                 p.is_deleted = 0
             ORDER BY 
                 p.expiry_date ASC;`; // Order by expiry_date ascending (soonest expiry first)
-    
+
             db.query(query, (err, result) => {
                 if (err) {
                     console.error('Database error:', err);
                     return reject(new Error('Error fetching products from the database'));
                 }
-    
+
                 if (!result || result.length === 0) {
                     return resolve([]); // Return an empty array if no products found
                 }
-    
-                // Update stock_status based on product_quantity
+
+                // Update stock_status based on product_quantity & format dates correctly
                 const updatedProducts = result.map(product => {
                     let stockStatus = 'Available';
                     if (product.product_quantity === 0) {
@@ -267,76 +382,21 @@ static getProductCount(req, res) {
                     } else if (product.product_quantity < 20) {
                         stockStatus = 'Low Stock';
                     }
-                    return { ...product, stock_status: stockStatus };
+
+                    return { 
+                        ...product, 
+                        stock_status: stockStatus,
+                        expiry_date: moment(product.expiry_date).tz('Asia/Kolkata').format('YYYY-MM-DD'),
+                        MFD: moment(product.MFD).tz('Asia/Kolkata').format('YYYY-MM-DD'),
+                        created_at: moment(product.created_at).tz('Asia/Kolkata').format('YYYY-MM-DD HH:mm:ss'),
+                        updated_at: moment(product.updated_at).tz('Asia/Kolkata').format('YYYY-MM-DD HH:mm:ss')
+                    };
                 });
-    
-                resolve(updatedProducts); // Return updated product data
+
+                resolve(updatedProducts);
             });
         });
     }
-    
-
-
-    // static fetchAll(page = 1, limit = 10) {
-    //     return new Promise((resolve, reject) => {
-    //         const offset = (page - 1) * limit; // Calculate offset for pagination
-    
-    //         // Query to fetch paginated products
-    //         const query = `
-    //         SELECT 
-    //             p.id, p.product_name, c.category_name AS product_category, p.product_quantity, 
-    //             p.product_price, p.product_description, p.generic_name, 
-    //             p.product_batch_no, p.expiry_date, p.product_discount, p.supplier_price, 
-    //             s.company_name AS supplier, p.brand_name, p.selling_price, p.GST, 
-    //             p.stock_status, p.MFD, p.created_at, p.updated_at, p.deleted_at, p.is_deleted
-    //         FROM 
-    //             product_table p
-    //         JOIN 
-    //             product_category c ON p.product_category = c.id
-    //         JOIN 
-    //             supplier s ON p.supplier = s.supplier_id
-    //         WHERE 
-    //             p.is_deleted = 0
-    //         LIMIT ? OFFSET ?`; // Limit and Offset for Pagination
-    
-    //         // Query to get total product count
-    //         const countQuery = `SELECT COUNT(*) AS total_products FROM product_table WHERE is_deleted = 0`;
-    
-    //         db.query(countQuery, [], (countErr, countResult) => {
-    //             if (countErr) {
-    //                 console.error('Database error (count):', countErr);
-    //                 return reject(new Error('Error fetching total product count'));
-    //             }
-    
-    //             const totalProducts = countResult[0].total_products; // Extract total count
-    
-    //             db.query(query, [limit, offset], (err, result) => {
-    //                 if (err) {
-    //                     console.error('Database error (products):', err);
-    //                     return reject(new Error('Error fetching products from the database'));
-    //                 }
-    
-    //                 if (!result || result.length === 0) {
-    //                     return resolve({ products: [], totalProducts });
-    //                 }
-    
-    //                 // Update stock_status based on product_quantity
-    //                 const updatedProducts = result.map(product => {
-    //                     let stockStatus = 'Available';
-    //                     if (product.product_quantity === 0) {
-    //                         stockStatus = 'Out of Stock';
-    //                     } else if (product.product_quantity < 20) {
-    //                         stockStatus = 'Low Stock';
-    //                     }
-    //                     return { ...product, stock_status: stockStatus };
-    //                 });
-    
-    //                 resolve({ products: updatedProducts, totalProducts }); // Return updated product data and count
-    //             });
-    //         });
-    //     });
-    // }
-
 
     static fetchAll(page = 1, limit = 10) {
         return new Promise((resolve, reject) => {
@@ -347,9 +407,9 @@ static getProductCount(req, res) {
             SELECT 
                 p.id, p.product_name, c.category_name AS product_category, p.product_quantity, 
                 p.product_price, p.product_description, p.generic_name, 
-                p.product_batch_no, p.expiry_date, p.product_discount, p.supplier_price, 
+                p.product_batch_no, p.expiry_date,  p.product_discount, p.supplier_price, 
                 s.company_name AS supplier, p.brand_name, p.selling_price, p.GST, 
-                p.stock_status, p.MFD, p.created_at, p.updated_at, p.deleted_at, p.is_deleted
+                p.stock_status, p.MFD,  p.created_at, p.updated_at, p.deleted_at, p.is_deleted
             FROM 
                 product_table p
             JOIN 
@@ -391,7 +451,14 @@ static getProductCount(req, res) {
                         } else if (product.product_quantity < 20) {
                             stockStatus = 'Low Stock';
                         }
-                        return { ...product, stock_status: stockStatus };
+                        return  { 
+                            ...product, 
+                            stock_status: stockStatus,
+                            expiry_date: moment(product.expiry_date).tz('Asia/Kolkata').format('YYYY-MM-DD'),
+                            MFD: moment(product.MFD).tz('Asia/Kolkata').format('YYYY-MM-DD'),
+                            created_at: moment(product.created_at).tz('Asia/Kolkata').format('YYYY-MM-DD HH:mm:ss'),
+                            updated_at: moment(product.updated_at).tz('Asia/Kolkata').format('YYYY-MM-DD HH:mm:ss')
+                        };
                     });
     
                     resolve({ products: updatedProducts, totalProducts }); // Return updated product data and count
@@ -420,7 +487,7 @@ static getProductCount(req, res) {
                     p.product_description,
                     p.generic_name,                   
                     p.product_batch_no,
-                    p.expiry_date,
+                    DATE_FORMAT(p.expiry_date, '%Y-%m-%d') AS expiry_date, 
                     p.product_discount,
                     p.supplier_price,
                     s.company_name AS supplier_name, -- Fetch supplier's company name
@@ -428,7 +495,7 @@ static getProductCount(req, res) {
                     p.selling_price,
                     p.GST,
                     p.stock_status,
-                    p.MFD,
+                    DATE_FORMAT(p.MFD, '%Y-%m-%d') AS MFD, -- Format MFD
                     p.created_at,
                     p.updated_at,
                     p.deleted_at,
