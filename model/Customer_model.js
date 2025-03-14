@@ -77,37 +77,37 @@ class Customer {
 
 
     // // Create a customer
-    // static async create(data) {
-    //     const {
-    //         customer_name,
-    //         phone,
-    //         email,
-    //         address,
-    //         purchased_item,
-    //         purchased_quantity,
-    //         amount,
-    //         status,
-    //         customer_gst_number,
-    //     } = data;
+    static async createcust(data) {
+        const {
+            customer_name,
+            phone,
+            email,
+            address,
+            purchased_item,
+            purchased_quantity,
+            amount,
+            status,
+            customer_gst_number,
+        } = data;
 
-    //     const result = await Customer.query(
-    //         `INSERT INTO customer_table 
-    //         (customer_name, phone, email, address, purchased_item, purchased_quantity, amount, status, customer_gst_number) 
-    //         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    //         [
-    //             customer_name,
-    //             phone,
-    //             email,
-    //             address,
-    //             purchased_item,
-    //             purchased_quantity,
-    //             amount,
-    //             status,
-    //             customer_gst_number,
-    //         ]
-    //     );
-    //     return result.insertId; // Return the newly created customer ID
-    // }
+        const result = await Customer.query(
+            `INSERT INTO customer_table 
+            (customer_name, phone, email, address, purchased_item, purchased_quantity, amount, status, customer_gst_number) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                customer_name,
+                phone,
+                email,
+                address,
+                purchased_item,
+                purchased_quantity,
+                amount,
+                status,
+                customer_gst_number,
+            ]
+        );
+        return result.insertId; // Return the newly created customer ID
+    }
 
 
     static async checkCustomerExists(phone) {
@@ -129,12 +129,14 @@ class Customer {
                 "INSERT INTO customer_table (customer_name, phone) VALUES (?, ?)",
                 [customer_name, phone]
             );
-            return result.insertId;
+    
+            return { customer_id: result.insertId };  // ✅ Return an object with customer_id
         } catch (error) {
             console.error("Error creating customer:", error);
             throw error;
         }
     }
+    
     
 
     // Get all customers

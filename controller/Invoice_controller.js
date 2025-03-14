@@ -30,15 +30,25 @@ exports.createInvoice = async (req, res) => {
             return res.status(400).json({ message: 'Invalid phone number. It must contain only digits and be 10-15 characters long.' });
         }
 
+        // let customer_id;
+        // const existingCustomer = await Customer.checkCustomerExists(phone);
+        // if (existingCustomer) {
+        //     customer_id = existingCustomer.customer_id;
+        // } else {
+        //     const newCustomer = await Customer.create({ customer_name, phone });
+        //     customer_id = newCustomer.customer_id; // ✅ Ensure correct ID is used
+        //     console.log("New customer created with ID:", customer_id);
+        // }
+
         let customer_id;
         const existingCustomer = await Customer.checkCustomerExists(phone);
         if (existingCustomer) {
-            customer_id = existingCustomer.customer_id;
+        customer_id = existingCustomer.customer_id;
         } else {
-            const newCustomer = await Customer.create({ customer_name, phone });
-            customer_id = newCustomer.customer_id; // ✅ Ensure correct ID is used
-            console.log("New customer created with ID:", customer_id);
-        }
+        const newCustomer = await Customer.create({ customer_name, phone });
+        customer_id = newCustomer.customer_id;  // ✅ Now this correctly retrieves customer_id
+        console.log("New customer created with ID:", customer_id);
+}
 
         let totalPrice = 0;
         let totalDiscount = 0;
