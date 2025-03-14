@@ -116,7 +116,25 @@ class CategoryController {
     }
   }
 
+  static async getProductsByCategory(req, res) {
+    try {
+      const { id } = req.params; // Get category_id from URL params
 
+      if (!id) {
+        return res.status(400).json({ message: "Category ID is required" });
+      }
+
+      const products = await Category.getProductsByCategory(id);
+
+      if (products.length === 0) {
+        return res.status(404).json({ message: "No products found for this category." });
+      }
+
+      res.status(200).json({ data: products });
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching products.", error: error.message });
+    }
+  }
 
 //ishu already correct code 
 
@@ -130,91 +148,95 @@ class CategoryController {
   }
 
 
-//   static async getAllCategories_pagination(req, res) { 
-//     try {
-//         const page = parseInt(req.query.page) || 1;  // Default to page 1
-//         const limit = parseInt(req.query.limit) || 10; // Default limit 10 per page
+  static async getAllCategories_pagination(req, res) { 
+    try {
+        const page = parseInt(req.query.page) || 1;  // Default to page 1
+        const limit = parseInt(req.query.limit) || 10; // Default limit 10 per page
 
-//         const { categories, totalCategories } = await Category.getAll_page(page, limit);
+        const { categories, totalCategories } = await Category.getAll_page(page, limit);
 
-//         res.status(200).json({
-//             success: true,
-//             message: "Categories fetched successfully",
-//             page: page,
-//             limit: limit,
-//             totalCategories: totalCategories,
-//             totalPages: Math.ceil(totalCategories / limit),
-//             data: categories
-//         });
+        res.status(200).json({
+            success: true,
+            message: "Categories fetched successfully",
+            page: page,
+            limit: limit,
+            totalCategories: totalCategories,
+            totalPages: Math.ceil(totalCategories / limit),
+            data: categories
+        });
 
-//     } catch (error) {
-//         res.status(500).json({ message: 'Error fetching categories.', error: error.message });
-//     }
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching categories.', error: error.message });
+    }
+}
+
+// static async getAllCategories_pagination(req, res) { 
+//   try {
+//       const page = parseInt(req.query.page) || 1;  // Default to page 1
+//       const limit = parseInt(req.query.limit) || 10; // Default limit 10 per page
+
+//       const categoriesWithProducts = await Category.getAll_page(page, limit);
+
+//       // Group products under their respective categories
+//       const categoriesMap = new Map();
+
+//       categoriesWithProducts.forEach(row => {
+//           if (!categoriesMap.has(row.category_id)) {
+//               categoriesMap.set(row.category_id, {
+//                   category_id: row.category_id,
+//                   category_name: row.category_name,
+//                   category_description: row.category_description,
+//                   category_created_at: row.category_created_at,
+//                   category_updated_at: row.category_updated_at,
+//                   cat_auto_gen_id: row.cat_auto_gen_id,
+//                   products: []
+//               });
+//           }
+          
+//           // If product details exist, push to the category
+//           if (row.product_id) {
+//               categoriesMap.get(row.category_id).products.push({
+//                   product_id: row.product_id,
+//                   product_name: row.product_name,
+//                   product_description: row.product_description,
+//                   product_price: row.product_price,
+//                   product_quantity: row.product_quantity,
+//                   stock_status: row.stock_status,
+//                   generic_name: row.generic_name,
+//                   product_batch_no: row.product_batch_no,
+//                   expiry_date: row.expiry_date,
+//                   product_discount: row.product_discount,
+//                   supplier_price: row.supplier_price,
+//                   supplier: row.supplier,
+//                   brand_name: row.brand_name,
+//                   selling_price: row.selling_price,
+//                   GST: row.GST,
+//                   product_created_at: row.product_created_at,
+//                   product_updated_at: row.product_updated_at,
+//                   deleted_at: row.deleted_at,
+//                   is_deleted: row.is_deleted
+//               });
+//           }
+//       });
+
+//       res.status(200).json({
+//           success: true,
+//           message: "Categories with products fetched successfully",
+//           page: page,
+//           limit: limit,
+//           totalCategories: categoriesMap.size,
+//           totalPages: Math.ceil(categoriesMap.size / limit),
+//           data: Array.from(categoriesMap.values())
+//       });
+
+//   } catch (error) {
+//       res.status(500).json({ message: 'Error fetching categories and products.', error: error.message });
+//   }
 // }
 
-static async getAllCategories_pagination(req, res) { 
-  try {
-      const page = parseInt(req.query.page) || 1;  // Default to page 1
-      const limit = parseInt(req.query.limit) || 10; // Default limit 10 per page
 
-      const categoriesWithProducts = await Category.getAll_page(page, limit);
 
-      // Group products under their respective categories
-      const categoriesMap = new Map();
 
-      categoriesWithProducts.forEach(row => {
-          if (!categoriesMap.has(row.category_id)) {
-              categoriesMap.set(row.category_id, {
-                  category_id: row.category_id,
-                  category_name: row.category_name,
-                  category_description: row.category_description,
-                  category_created_at: row.category_created_at,
-                  category_updated_at: row.category_updated_at,
-                  cat_auto_gen_id: row.cat_auto_gen_id,
-                  products: []
-              });
-          }
-          
-          // If product details exist, push to the category
-          if (row.product_id) {
-              categoriesMap.get(row.category_id).products.push({
-                  product_id: row.product_id,
-                  product_name: row.product_name,
-                  product_description: row.product_description,
-                  product_price: row.product_price,
-                  product_quantity: row.product_quantity,
-                  stock_status: row.stock_status,
-                  generic_name: row.generic_name,
-                  product_batch_no: row.product_batch_no,
-                  expiry_date: row.expiry_date,
-                  product_discount: row.product_discount,
-                  supplier_price: row.supplier_price,
-                  supplier: row.supplier,
-                  brand_name: row.brand_name,
-                  selling_price: row.selling_price,
-                  GST: row.GST,
-                  product_created_at: row.product_created_at,
-                  product_updated_at: row.product_updated_at,
-                  deleted_at: row.deleted_at,
-                  is_deleted: row.is_deleted
-              });
-          }
-      });
-
-      res.status(200).json({
-          success: true,
-          message: "Categories with products fetched successfully",
-          page: page,
-          limit: limit,
-          totalCategories: categoriesMap.size,
-          totalPages: Math.ceil(categoriesMap.size / limit),
-          data: Array.from(categoriesMap.values())
-      });
-
-  } catch (error) {
-      res.status(500).json({ message: 'Error fetching categories and products.', error: error.message });
-  }
-}
 
 
 static async getAllCategoryNamesHandler(req, res) {  

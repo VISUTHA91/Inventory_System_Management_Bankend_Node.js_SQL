@@ -115,6 +115,46 @@ static async filterCategoriesAndProducts({ cat_auto_gen_id, product_name, produc
   }
 }
 
+static async getProductsByCategory(id) {
+  try {
+    let sql = `
+      SELECT 
+        p.id AS product_id,
+        p.product_name,
+        p.product_description,
+        p.product_price,
+        p.product_quantity,
+        p.stock_status,
+        p.generic_name,
+        p.product_batch_no,
+        p.expiry_date,
+        p.product_discount,
+        p.supplier_price,
+        p.supplier,
+        p.brand_name,
+        p.selling_price,
+        p.GST,
+        p.created_at,
+        p.updated_at
+      FROM 
+        product_table p
+      WHERE 
+        p.product_category = ? 
+        AND (p.is_deleted = 0 OR p.is_deleted IS NULL) 
+    `;
+
+    const results = await queryAsync(sql, [id]); // Using your existing queryAsync function
+
+    if (results.length === 0) {
+      return { message: "No products found for this category." };
+    }
+
+    return { data: results };
+  } catch (error) {
+    return { message: "Error fetching products.", error: error.message };
+  }
+}
+
 
 
 
@@ -206,63 +246,69 @@ static async filterCategoriesAndProducts({ cat_auto_gen_id, product_name, produc
     return rows;
   }
 
-//   static async getAll_page(page, limit) {
-//     const offset = (page - 1) * limit; // Calculate offset
+  static async getAll_page(page, limit) {
+    const offset = (page - 1) * limit; // Calculate offset
 
-//     // Query to fetch paginated categories
-//     const rows = await queryAsync(
-//         'SELECT * FROM product_category LIMIT ? OFFSET ?', 
-//         [limit, offset]
-//     );
+    // Query to fetch paginated categories
+    const rows = await queryAsync(
+        'SELECT * FROM product_category LIMIT ? OFFSET ?', 
+        [limit, offset]
+    );
 
-//     // Query to get total count of categories
-//     const totalRows = await queryAsync('SELECT COUNT(*) AS total FROM product_category', []);
-//     const totalCategories = totalRows[0].total;
+    // Query to get total count of categories
+    const totalRows = await queryAsync('SELECT COUNT(*) AS total FROM product_category', []);
+    const totalCategories = totalRows[0].total;
 
-//     return { categories: rows, totalCategories };
+    return { categories: rows, totalCategories };
+}
+
+
+// static async getAll_page(page, limit) {
+//   const offset = (page - 1) * limit; // Calculate offset
+
+//   // Query to fetch paginated categories with their related products
+//   const query = `
+//       SELECT 
+//           c.id AS category_id,
+//           c.category_name,
+//           c.description AS category_description,
+//           c.created_at AS category_created_at,
+//           c.updated_at AS category_updated_at,
+//           c.cat_auto_gen_id,
+//           p.id AS product_id,
+//           p.product_name,
+//           p.product_description,
+//           p.product_price,
+//           p.product_quantity,
+//           p.stock_status,
+//           p.generic_name,
+//           p.product_batch_no,
+//           p.expiry_date,
+//           p.product_discount,
+//           p.supplier_price,
+//           p.supplier,
+//           p.brand_name,
+//           p.selling_price,
+//           p.GST,
+//           p.created_at AS product_created_at,
+//           p.updated_at AS product_updated_at,
+//           p.deleted_at,
+//           p.is_deleted
+//       FROM product_category c
+//       LEFT JOIN product_table p ON c.id = p.product_category  -- Updated JOIN condition
+//       LIMIT ? OFFSET ?;
+//   `;
+
+//   const rows = await queryAsync(query, [limit, offset]);
+
+//   return rows;
 // }
 
 
-static async getAll_page(page, limit) {
-  const offset = (page - 1) * limit; // Calculate offset
 
-  // Query to fetch paginated categories with their related products
-  const query = `
-      SELECT 
-          c.id AS category_id,
-          c.category_name,
-          c.description AS category_description,
-          c.created_at AS category_created_at,
-          c.updated_at AS category_updated_at,
-          c.cat_auto_gen_id,
-          p.id AS product_id,
-          p.product_name,
-          p.product_description,
-          p.product_price,
-          p.product_quantity,
-          p.stock_status,
-          p.generic_name,
-          p.product_batch_no,
-          p.expiry_date,
-          p.product_discount,
-          p.supplier_price,
-          p.supplier,
-          p.brand_name,
-          p.selling_price,
-          p.GST,
-          p.created_at AS product_created_at,
-          p.updated_at AS product_updated_at,
-          p.deleted_at,
-          p.is_deleted
-      FROM product_category c
-      LEFT JOIN product_table p ON c.id = p.product_category  -- Updated JOIN condition
-      LIMIT ? OFFSET ?;
-  `;
 
-  const rows = await queryAsync(query, [limit, offset]);
 
-  return rows;
-}
+
 
 
 static async getAllCategoryNames() {  
