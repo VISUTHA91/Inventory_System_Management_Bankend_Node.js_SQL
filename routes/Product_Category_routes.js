@@ -16,7 +16,7 @@ router.get('/category-names', authMiddleware, adminOnly,CategoryController.getAl
 router.get('/id_category/:id',authMiddleware, adminOnly, CategoryController.getCategoryById);
 
 // Route to get category id to fetch products by category
-router.get('/category/:id',authMiddleware, adminOnly, CategoryController.getProductsByCategory);
+router.get('/category_product/:id',authMiddleware, adminOnly, CategoryController.getProductsByCategory);
 
 // Route to create a new category
 router.post('/insert_category', authMiddleware, adminOnly,CategoryController.createCategory);
