@@ -445,17 +445,34 @@ exports.updateInvoice = async (req, res) => {
 
 // invoice number to use the details
 
+// exports.getInvoiceDetails = async (req, res) => {
+//     try {
+//         const { invoice_number } = req.params;
+//         console.log(req.params);
+
+//         const results = await Invoice.getInvoiceDetails(invoice_number); // No need to destructure it
+//         if (results.length === 0) {
+//             return res.status(404).json({ message: "Invoice not found" });
+//         }
+
+//         res.status(200).json({ data: results[0] }); // Return the first result
+//     } catch (error) {
+//         console.error("Error fetching invoice:", error);
+//         res.status(500).json({ message: "Server error", error: error.message });
+//     }
+// };
 exports.getInvoiceDetails = async (req, res) => {
     try {
         const { invoice_number } = req.params;
         console.log(req.params);
 
-        const results = await Invoice.getInvoiceDetails(invoice_number); // No need to destructure it
-        if (results.length === 0) {
-            return res.status(404).json({ message: "Invoice not found" });
+        const results = await Invoice.getInvoiceDetails(invoice_number);
+
+        if (results.error) {
+            return res.status(results.status).json({ message: results.error });
         }
 
-        res.status(200).json({ data: results[0] }); // Return the first result
+        res.status(200).json({ data: results }); // Return full object
     } catch (error) {
         console.error("Error fetching invoice:", error);
         res.status(500).json({ message: "Server error", error: error.message });

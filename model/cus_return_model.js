@@ -1,7 +1,7 @@
 const db = require('../config/Database'); // Database connection (e.g., MySQL)
 
 class ProductReturn {
-    // Create a product return
+    // // Create a product return
     static createReturn(invoice_id, product_id, quantity, return_reason) {
         return new Promise((resolve, reject) => {
             const query = 'INSERT INTO product_return_table SET ?';
@@ -37,6 +37,40 @@ class ProductReturn {
 // }
 
 // Get paginated product returns
+// static async createReturn(invoice_id, product_id, quantity, return_reason) {
+//     return new Promise((resolve, reject) => {
+//         // முதலில் invoice இருப்பதை சரிபார்க்க வேண்டும்
+//         const checkInvoiceQuery = 'SELECT * FROM invoice_table WHERE invoice_id = ?';
+
+//         db.query(checkInvoiceQuery, [invoice_id], (err, results) => {
+//             if (err) {
+//                 return reject(new Error("Database query error"));
+//             }
+//             if (results.length === 0) {
+//                 return reject(new Error("Invoice not found")); // சரியான பிழை
+//             }
+
+//             // Invoice இருப்பதால் Product Return செய்யலாம்
+//             const insertQuery = 'INSERT INTO product_return_table SET ?';
+//             const values = { invoice_id, product_id, quantity, return_reason };
+
+//             db.query(insertQuery, values, (err, result) => {
+//                 if (err) {
+//                     return reject(err);
+//                 }
+//                 resolve(result);
+//             });
+//         });
+//     });
+// }
+
+
+
+
+
+
+
+
 static getAllReturns(page = 1, limit = 10) {
     return new Promise((resolve, reject) => {
         const offset = (page - 1) * limit; // Calculate offset for pagination

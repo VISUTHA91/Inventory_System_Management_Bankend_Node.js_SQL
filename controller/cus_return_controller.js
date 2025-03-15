@@ -37,6 +37,60 @@ class ProductReturnController {
             res.status(500).json({ message: 'Internal Server Error' });
         }
     }
+
+
+    // static async returnProduct(req, res) {
+    //     try {
+    //         const { invoice_id, returnedProducts } = req.body;
+    
+    //         if (!invoice_id || !Array.isArray(returnedProducts) || returnedProducts.length === 0) {
+    //             return res.status(400).json({ message: "Invalid request data" });
+    //         }
+    
+    //         for (const item of returnedProducts) {
+    //             const { product_id, quantity, return_reason } = item;
+    
+    //             // Step 1: Check if the product exists in the invoice
+    //             const purchasedQuantity = await ProductReturn.checkPurchasedQuantity(invoice_id, product_id);
+    
+    //             if (purchasedQuantity === null) {
+    //                 console.log(`Product ${product_id} not found in invoice ${invoice_id}`);
+    //                 return res.status(404).json({ message: "Product not found in the invoice" });
+    //             }
+    
+    //             console.log(`Purchased Quantity: ${purchasedQuantity}, Return Quantity: ${quantity}`);
+    
+    //             if (quantity > purchasedQuantity) {
+    //                 return res.status(400).json({
+    //                     message: `Return quantity exceeds the purchased quantity. Purchased: ${purchasedQuantity}, Return: ${quantity}`,
+    //                 });
+    //             }
+    
+    //             // Step 3: Log the return in the product_return_table
+    //             try {
+    //                 await ProductReturn.createReturn(invoice_id, product_id, quantity, return_reason);
+    //             } catch (dbError) {
+    //                 console.error("Error inserting return record:", dbError);
+    //                 return res.status(500).json({ message: "Database query error while inserting return record" });
+    //             }
+    
+    //             // Step 4: Update the product quantity in the product table (add returned quantity)
+    //             try {
+    //                 await ProductReturn.updateProductQuantity(product_id, quantity);
+    //             } catch (dbError) {
+    //                 console.error("Error updating product quantity:", dbError);
+    //                 return res.status(500).json({ message: "Database query error while updating product quantity" });
+    //             }
+    //         }
+    
+    //         res.status(200).json({ message: "Product return processed successfully" });
+    //     } catch (error) {
+    //         console.error("Unexpected error:", error);
+    //         res.status(500).json({ message: "Internal Server Error" });
+    //     }
+    // }
+    
+    
     
     //pagination return
     static async getAllReturns(req, res) {
